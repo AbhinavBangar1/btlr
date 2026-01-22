@@ -1,0 +1,25 @@
+class: Opportunity
+table: opportunity
+fields:
+  studentProfileId: int?  # Null if not yet assigned
+  title: String
+  type: String  # "internship", "hackathon", "scholarship", "workshop", "competition"
+  description: String?
+  organization: String?
+  sourceUrl: String?
+  deadline: DateTime?
+  tags: String?  # JSON array
+  relevanceScore: double, default=0.0  # 0-1, based on matching with goals
+  status: String, default='discovered'  # "discovered", "interested", "applied", "rejected", "accepted", "ignored"
+  prepTimeMinutes: int?  # Estimated prep time needed
+  appliedAt: DateTime?
+  discoveredAt: DateTime, default=now
+indexes:
+  opportunity_student_idx:
+    fields: studentProfileId
+  opportunity_deadline_idx:
+    fields: deadline
+  opportunity_status_idx:
+    fields: status
+  opportunity_type_idx:
+    fields: type

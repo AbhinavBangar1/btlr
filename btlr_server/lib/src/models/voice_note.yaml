@@ -1,0 +1,20 @@
+class: VoiceNote
+table: voice_note
+fields:
+  studentProfileId: int
+  learningGoalId: int?  # Optional link to goal
+  transcription: String
+  originalAudioUrl: String?  # If stored
+  recordedAt: DateTime, default=now
+  duration: int?  # Seconds
+  tags: String?  # Auto-extracted tags (JSON)
+  sentiment: String?  # "positive", "neutral", "negative", "frustrated"
+  category: String?  # "idea", "reflection", "question", "progress"
+  searchableContent: String?  # Processed for search
+indexes:
+  voice_note_student_idx:
+    fields: studentProfileId
+  voice_note_goal_idx:
+    fields: learningGoalId
+  voice_note_recorded_idx:
+    fields: recordedAt

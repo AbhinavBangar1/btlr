@@ -1,0 +1,18 @@
+class: AcademicSchedule
+table: academic_schedule
+fields:
+  studentProfileId: int
+  title: String  # e.g., "Data Structures Lecture"
+  type: String  # "class", "exam", "lab", "workshop"
+  location: String?
+  rrule: String?  # Recurrence rule (e.g., "FREQ=WEEKLY;BYDAY=MO,WE")
+  startTime: DateTime
+  endTime: DateTime
+  isRecurring: bool, default=false
+  deletedAt: DateTime?  # Soft delete
+  createdAt: DateTime, default=now
+indexes:
+  academic_schedule_student_idx:
+    fields: studentProfileId
+  academic_schedule_time_idx:
+    fields: startTime, endTime

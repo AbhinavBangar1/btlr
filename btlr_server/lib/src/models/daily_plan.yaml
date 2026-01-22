@@ -1,0 +1,16 @@
+class: DailyPlan
+table: daily_plan
+fields:
+  studentProfileId: int
+  planDate: DateTime  # Date for this plan
+  version: int, default=1  # Version tracking
+  reasoning: String?  # Why this plan was generated
+  totalPlannedMinutes: int, default=0
+  generatedAt: DateTime, default=now
+  adaptationNotes: String?  # What changed from previous version
+indexes:
+  daily_plan_student_date_idx:
+    fields: studentProfileId, planDate
+    unique: true
+  daily_plan_date_idx:
+    fields: planDate

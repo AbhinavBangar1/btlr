@@ -1,0 +1,28 @@
+class: TimeBlock
+table: time_block
+fields:
+  dailyPlanId: int
+  learningGoalId: int?  # Optional: linked to goal
+  academicScheduleId: int?  # Optional: linked to class
+  title: String
+  description: String?
+  blockType: String  # "study", "class", "break", "exam_prep", "project_work", "opportunity_prep"
+  startTime: DateTime
+  endTime: DateTime
+  durationMinutes: int
+  isCompleted: bool, default=false
+  completionStatus: String, default='pending'  # "pending", "completed", "missed", "postponed"
+  actualDurationMinutes: int?
+  energyLevel: int?  # 1-5 scale
+  notes: String?
+  missReason: String?
+  createdAt: DateTime, default=now
+indexes:
+  time_block_plan_idx:
+    fields: dailyPlanId
+  time_block_goal_idx:
+    fields: learningGoalId
+  time_block_time_idx:
+    fields: startTime, endTime
+  time_block_completion_idx:
+    fields: completionStatus

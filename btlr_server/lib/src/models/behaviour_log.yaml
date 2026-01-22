@@ -1,0 +1,19 @@
+class: BehaviorLog
+table: behavior_log
+fields:
+  studentProfileId: int
+  timeBlockId: int
+  action: String  # "completed", "missed", "postponed", "started"
+  timestamp: DateTime, default=now
+  actualDuration: int?  # Minutes actually spent
+  energyLevel: int?  # 1-5 scale
+  notes: String?
+  reason: String?  # Why missed/postponed
+  context: String?  # JSON: time of day, day of week, etc.
+indexes:
+  behavior_log_student_idx:
+    fields: studentProfileId
+  behavior_log_timeblock_idx:
+    fields: timeBlockId
+  behavior_log_timestamp_idx:
+    fields: timestamp

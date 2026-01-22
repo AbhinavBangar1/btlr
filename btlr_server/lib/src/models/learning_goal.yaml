@@ -1,0 +1,22 @@
+class: LearningGoal
+table: learning_goal
+fields:
+  studentProfileId: int
+  title: String  # e.g., "Learn Flutter"
+  description: String?
+  category: String  # "technical_skill", "project", "certification", "soft_skill"
+  priority: String, default='medium'  # "high", "medium", "low"
+  status: String, default='not_started'  # "not_started", "in_progress", "completed", "paused"
+  estimatedHours: double?
+  actualHours: double, default=0.0
+  deadline: DateTime?
+  tags: String?  # JSON array of tags
+  createdAt: DateTime, default=now
+  updatedAt: DateTime, default=now
+indexes:
+  learning_goal_student_idx:
+    fields: studentProfileId
+  learning_goal_status_idx:
+    fields: status
+  learning_goal_deadline_idx:
+    fields: deadline
