@@ -4,13 +4,19 @@ import '../providers/student_provider.dart';
 import '../providers/plan_provider.dart';
 import '../providers/behavior_provider.dart';
 import '../providers/goals_provider.dart';
-// import '../providers/opportunities_provider.dart';
+
+// --- BRAND CONSTANTS ---
+const Color kPrimaryBlue = Color(0xFF274B7F); // BTLR Sapphire Blue
+const Color kBackgroundWhite = Color(0xFFFFFFFF);
+const Color kSapphireTintFill = Color(0xFFF1F5F9); // Light bluish tint
+const double kBorderRadius = 24.0;
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Corrected naming to ensure consistency with backend logic
     final studentAsync = ref.watch(studentProfileProvider);
     final todaysPlanAsync = ref.watch(todaysPlanProvider);
     final currentBlockAsync = ref.watch(currentBlockProvider);
@@ -19,11 +25,37 @@ class DashboardScreen extends ConsumerWidget {
     final activeGoals = ref.watch(activeGoalsProvider);
 
     return Scaffold(
+      backgroundColor: kBackgroundWhite,
       appBar: AppBar(
-        title: const Text('Dashboard'),
+        backgroundColor: kBackgroundWhite,
+        elevation: 0,
+        centerTitle: true,
+        toolbarHeight: 90,
+        title: Column(
+          children: [
+            const Text(
+              "BTLR",
+              style: TextStyle(
+                fontSize: 34,
+                fontWeight: FontWeight.w900,
+                color: kPrimaryBlue,
+                letterSpacing: -2,
+              ),
+            ),
+            Text(
+              "EXECUTIVE DASHBOARD",
+              style: TextStyle(
+                fontSize: 9,
+                letterSpacing: 3,
+                color: kPrimaryBlue.withOpacity(0.5),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh_rounded, color: kPrimaryBlue),
             onPressed: () {
               ref.read(todaysPlanProvider.notifier).reload();
               ref.invalidate(currentBlockProvider);
@@ -33,175 +65,141 @@ class DashboardScreen extends ConsumerWidget {
         ],
       ),
       body: RefreshIndicator(
+        color: kPrimaryBlue,
         onRefresh: () async {
           ref.read(todaysPlanProvider.notifier).reload();
           ref.invalidate(currentBlockProvider);
           ref.invalidate(defaultCompletionStatsProvider);
         },
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Welcome Section
-              studentAsync.when(
-                data: (student) => student != null
-                    ? Text(
-                        'Welcome back, ${student.name}! 👋',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      )
-                    : const SizedBox(),
-                loading: () => const CircularProgressIndicator(),
-                error: (_, _) => const SizedBox(),
+              // 1. WELCOME SECTION
+              _StaggeredEntrance(
+                delayIndex: 0,
+                child: studentAsync.when(
+                  data: (student) => Text(
+                    'WELCOME BACK, ${student?.name.toUpperCase() ?? "USER"}! 👋',
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: kPrimaryBlue,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  loading: () => const LinearProgressIndicator(color: kPrimaryBlue),
+                  error: (_, __) => const SizedBox(),
+                ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 32),
 
-              // Current Block Card
-              currentBlockAsync.when(
-                data: (block) => block != null
-                    ? _CurrentBlockCard(block: block)
-                    : Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            children: [
-                              Icon(Icons.check_circle, color: Colors.green[400], size: 32),
-                              const SizedBox(width: 16),
-                              const Expanded(
-                                child: Text(
-                                  'No current block - You\'re all caught up!',
-                                  style: TextStyle(fontSize: 16),
-                                ),
-                              ),
-                            ],
+              // 2. HERO CURRENT BLOCK (Premium Gradient)
+              _StaggeredEntrance(
+                delayIndex: 1,
+                child: currentBlockAsync.when(
+                  data: (block) => block != null
+                      ? _CurrentBlockHero(block: block)
+                      : _EmptyStateHero(),
+                  loading: () => const _LoadingCard(),
+                  error: (_, __) => const SizedBox(),
+                ),
+              ),
+              const SizedBox(height: 32),
+
+              // 3. PERFORMANCE GRID (Staggered Entrance)
+              _StaggeredEntrance(
+                delayIndex: 2,
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: completionStatsAsync.when(
+                            data: (stats) => _StatCard(
+                              title: 'COMPLETION',
+                              value: '${((stats['completionRate'] as double) * 100).toStringAsFixed(0)}%',
+                              icon: Icons.donut_large_rounded,
+                              iconColor: Colors.blueAccent,
+                            ),
+                            loading: () => const _StatCardLoading(),
+                            error: (_, __) => const _StatCard(title: 'COMPLETION', value: '--', icon: Icons.error, iconColor: Colors.blueAccent),
                           ),
                         ),
-                      ),
-                loading: () => const Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: streakAsync.when(
+                            data: (streak) => _StatCard(
+                              title: 'STREAK',
+                              value: '${streak['currentStreak']} DAYS',
+                              icon: Icons.bolt_rounded,
+                              iconColor: Colors.orangeAccent,
+                            ),
+                            loading: () => const _StatCardLoading(),
+                            error: (_, __) => const _StatCard(title: 'STREAK', value: '--', icon: Icons.bolt, iconColor: Colors.orangeAccent),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _StatCard(
+                            title: 'ACTIVE GOALS',
+                            value: '${activeGoals.length}',
+                            icon: Icons.flag_rounded,
+                            iconColor: Colors.greenAccent[700]!,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: todaysPlanAsync.when(
+                            data: (plan) => _StatCard(
+                              title: 'PLAN',
+                              value: plan != null ? '${plan.totalPlannedMinutes}M' : '--',
+                              icon: Icons.hourglass_bottom_rounded,
+                              iconColor: Colors.purpleAccent,
+                            ),
+                            loading: () => const _StatCardLoading(),
+                            error: (_, __) => const _StatCard(title: 'PLAN', value: '--', icon: Icons.history, iconColor: Colors.purpleAccent),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                error: (_, _) => const SizedBox(),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 40),
 
-              // Stats Row
-              Row(
-                children: [
-                  // Completion Rate
-                  Expanded(
-                    child: completionStatsAsync.when(
-                      data: (stats) => _StatCard(
-                        title: 'Completion Rate',
-                        value: '${((stats['completionRate'] as double) * 100).toStringAsFixed(0)}%',
-                        icon: Icons.check_circle_outline,
-                        color: Colors.blue,
-                      ),
-                      loading: () => const _StatCardLoading(),
-                      error: (_, _) => const _StatCard(
-                        title: 'Completion Rate',
-                        value: '--',
-                        icon: Icons.check_circle_outline,
-                        color: Colors.blue,
-                      ),
+              // 4. QUICK ACTIONS
+              _StaggeredEntrance(
+                delayIndex: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'QUICK ACTIONS',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimaryBlue, letterSpacing: 2),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  // Streak
-                  Expanded(
-                    child: streakAsync.when(
-                      data: (streak) => _StatCard(
-                        title: 'Current Streak',
-                        value: '${streak['currentStreak']} days',
-                        icon: Icons.local_fire_department,
-                        color: Colors.orange,
-                      ),
-                      loading: () => const _StatCardLoading(),
-                      error: (_, _) => const _StatCard(
-                        title: 'Current Streak',
-                        value: '--',
-                        icon: Icons.local_fire_department,
-                        color: Colors.orange,
-                      ),
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        _QuickActionButton(
+                          label: 'GENERATE PLAN',
+                          icon: Icons.auto_awesome_rounded,
+                          onPressed: () => ref.read(todaysPlanProvider.notifier).generatePlan(),
+                        ),
+                        _QuickActionButton(label: 'ADD GOAL', icon: Icons.add_rounded, onPressed: () {}),
+                        _QuickActionButton(label: 'VIEW SCHEDULE', icon: Icons.calendar_view_day_rounded, onPressed: () {}),
+                      ],
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              Row(
-                children: [
-                  // Active Goals
-                  Expanded(
-                    child: _StatCard(
-                      title: 'Active Goals',
-                      value: '${activeGoals.length}',
-                      icon: Icons.flag,
-                      color: Colors.green,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  // Today's Plan
-                  Expanded(
-                    child: todaysPlanAsync.when(
-                      data: (plan) => _StatCard(
-                        title: 'Planned Today',
-                        value: plan != null ? '${plan.totalPlannedMinutes} min' : '--',
-                        icon: Icons.today,
-                        color: Colors.purple,
-                      ),
-                      loading: () => const _StatCardLoading(),
-                      error: (_, _) => const _StatCard(
-                        title: 'Planned Today',
-                        value: '--',
-                        icon: Icons.today,
-                        color: Colors.purple,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // Quick Actions
-              Text(
-                'Quick Actions',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: [
-                  _QuickActionButton(
-                    label: 'Generate Plan',
-                    icon: Icons.auto_awesome,
-                    onPressed: () async {
-                      await ref.read(todaysPlanProvider.notifier).generatePlan();
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Plan generated!')),
-                        );
-                      }
-                    },
-                  ),
-                  _QuickActionButton(
-                    label: 'Add Goal',
-                    icon: Icons.add_task,
-                    onPressed: () {
-                      // Navigate to goals screen
-                    },
-                  ),
-                  _QuickActionButton(
-                    label: 'View Schedule',
-                    icon: Icons.calendar_today,
-                    onPressed: () {
-                      // Navigate to schedule screen
-                    },
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
@@ -211,164 +209,132 @@ class DashboardScreen extends ConsumerWidget {
   }
 }
 
-class _CurrentBlockCard extends ConsumerWidget {
-  final dynamic block;
+// --- SUB-WIDGETS ---
 
-  const _CurrentBlockCard({required this.block});
+class _CurrentBlockHero extends ConsumerWidget {
+  final dynamic block;
+  const _CurrentBlockHero({required this.block});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final now = DateTime.now();
     final progress = (now.difference(block.startTime).inMinutes / block.durationMinutes).clamp(0.0, 1.0);
 
-    return Card(
-      color: Theme.of(context).colorScheme.primaryContainer,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.play_circle_filled,
-                  color: Theme.of(context).colorScheme.primary,
-                  size: 32,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Current Block',
-                        style: Theme.of(context).textTheme.labelLarge,
-                      ),
-                      Text(
-                        block.title,
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            LinearProgressIndicator(value: progress),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '${_formatTime(block.startTime)} - ${_formatTime(block.endTime)}',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                Text(
-                  '${block.durationMinutes} min',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: FilledButton.icon(
-                    onPressed: () async {
-                      final actions = ref.read(timeBlockActionsProvider);
-                      await actions.completeBlock(block.id);
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Block completed! 🎉')),
-                        );
-                      }
-                    },
-                    icon: const Icon(Icons.check),
-                    label: const Text('Complete'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      final actions = ref.read(timeBlockActionsProvider);
-                      await actions.missBlock(block.id, 'User marked as missed');
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Block marked as missed')),
-                        );
-                      }
-                    },
-                    icon: const Icon(Icons.close),
-                    label: const Text('Miss'),
-                  ),
-                ),
-              ],
-            ),
-          ],
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(28),
+      decoration: BoxDecoration(
+        color: kPrimaryBlue,
+        borderRadius: BorderRadius.circular(kBorderRadius),
+        boxShadow: [
+          BoxShadow(color: kPrimaryBlue.withOpacity(0.25), blurRadius: 25, offset: const Offset(0, 10)),
+        ],
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [kPrimaryBlue, Color(0xFF3B64A0)],
         ),
       ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.play_circle_filled_rounded, color: Colors.white, size: 36),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('ACTIVE NOW', style: TextStyle(color: Colors.white.withOpacity(0.6), fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: 1.5)),
+                    Text(block.title.toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: LinearProgressIndicator(value: progress, backgroundColor: Colors.white.withOpacity(0.15), color: Colors.white, minHeight: 8),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('${block.startTime.hour}:${block.startTime.minute.toString().padLeft(2, '0')} - ${block.endTime.hour}:${block.endTime.minute.toString().padLeft(2, '0')}',
+                  style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600)),
+              Text('${block.durationMinutes} MIN', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    final actions = ref.read(timeBlockActionsProvider);
+                    await actions.completeBlock(block.id);
+                  },
+                  icon: const Icon(Icons.check_rounded, size: 18),
+                  label: const Text('COMPLETE', style: TextStyle(fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: kPrimaryBlue,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 0,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    final actions = ref.read(timeBlockActionsProvider);
+                    await actions.missBlock(block.id, 'User marked as missed');
+                  },
+                  icon: const Icon(Icons.close_rounded, size: 18),
+                  label: const Text('MISS', style: TextStyle(fontWeight: FontWeight.bold)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white70, width: 2),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
-  }
-
-  String _formatTime(DateTime time) {
-    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
   }
 }
 
 class _StatCard extends StatelessWidget {
-  final String title;
-  final String value;
+  final String title, value;
   final IconData icon;
-  final Color color;
-
-  const _StatCard({
-    required this.title,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
+  final Color iconColor;
+  const _StatCard({required this.title, required this.value, required this.icon, required this.iconColor});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: color, size: 32),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
-                  ),
-            ),
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: kSapphireTintFill,
+        borderRadius: BorderRadius.circular(kBorderRadius),
+        border: Border.all(color: kPrimaryBlue.withOpacity(0.05)),
       ),
-    );
-  }
-}
-
-class _StatCardLoading extends StatelessWidget {
-  const _StatCardLoading();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Card(
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Center(
-          child: CircularProgressIndicator(),
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: iconColor, size: 30),
+          const SizedBox(height: 12),
+          Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: kPrimaryBlue)),
+          Text(title, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: kPrimaryBlue.withOpacity(0.4), letterSpacing: 1)),
+        ],
       ),
     );
   }
@@ -378,22 +344,86 @@ class _QuickActionButton extends StatelessWidget {
   final String label;
   final IconData icon;
   final VoidCallback onPressed;
-
-  const _QuickActionButton({
-    required this.label,
-    required this.icon,
-    required this.onPressed,
-  });
+  const _QuickActionButton({required this.label, required this.icon, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon),
-      label: Text(label),
-      style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          color: kSapphireTintFill,
+          border: Border.all(color: kPrimaryBlue.withOpacity(0.1), width: 1.5),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: kPrimaryBlue, size: 18),
+            const SizedBox(width: 10),
+            Text(label, style: const TextStyle(color: kPrimaryBlue, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1)),
+          ],
+        ),
       ),
     );
   }
+}
+
+// --- ENTRANCE ANIMATION ---
+
+class _StaggeredEntrance extends StatefulWidget {
+  final Widget child;
+  final int delayIndex;
+  const _StaggeredEntrance({required this.child, required this.delayIndex});
+  @override
+  State<_StaggeredEntrance> createState() => _StaggeredEntranceState();
+}
+
+class _StaggeredEntranceState extends State<_StaggeredEntrance> {
+  bool _visible = false;
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(Duration(milliseconds: 150 * widget.delayIndex), () {
+      if (mounted) setState(() => _visible = true);
+    });
+  }
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 1000),
+      opacity: _visible ? 1.0 : 0.0,
+      curve: Curves.easeOutQuart,
+      child: AnimatedPadding(
+        duration: const Duration(milliseconds: 1000),
+        curve: Curves.easeOutQuart,
+        padding: EdgeInsets.only(top: _visible ? 0 : 25),
+        child: widget.child,
+      ),
+    );
+  }
+}
+
+// Skeletons & Placeholders
+class _StatCardLoading extends StatelessWidget {
+  const _StatCardLoading();
+  @override
+  Widget build(BuildContext context) => Container(height: 100, decoration: BoxDecoration(color: kSapphireTintFill, borderRadius: BorderRadius.circular(kBorderRadius)));
+}
+
+class _LoadingCard extends StatelessWidget {
+  const _LoadingCard();
+  @override
+  Widget build(BuildContext context) => Container(height: 200, decoration: BoxDecoration(color: kSapphireTintFill, borderRadius: BorderRadius.circular(kBorderRadius)));
+}
+
+class _EmptyStateHero extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(28),
+    decoration: BoxDecoration(color: kSapphireTintFill, borderRadius: BorderRadius.circular(kBorderRadius)),
+    child: Row(children: [const Icon(Icons.check_circle_rounded, color: Colors.green, size: 32), const SizedBox(width: 16), const Text("YOU'RE ALL CAUGHT UP!", style: TextStyle(fontWeight: FontWeight.w900, color: kPrimaryBlue, letterSpacing: 1))]),
+  );
 }

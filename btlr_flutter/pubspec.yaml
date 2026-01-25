@@ -21,6 +21,7 @@ dependencies:
   serverpod_auth_shared_flutter: ^3.2.2  # ADD THIS LINE
   flutter_riverpod: ^2.4.9
   riverpod_annotation: ^2.3.3
+  intl: ^0.20.2
 
 dev_dependencies:
   flutter_test:
@@ -31,3 +32,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - lib/assets/logo.png
+    - lib/assets/image.png
