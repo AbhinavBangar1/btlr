@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/goals_provider.dart';
 
+// --- BRAND CONSTANTS ---
+const Color kPrimaryBlue = Color(0xFF274B7F);
+const Color kBackgroundWhite = Color(0xFFFFFFFF);
+const Color kSapphireTintFill = Color(0xFFF1F5F9);
+const double kBorderRadius = 24.0;
+
 class GoalsScreen extends ConsumerStatefulWidget {
   const GoalsScreen({super.key});
 
@@ -10,7 +16,7 @@ class GoalsScreen extends ConsumerStatefulWidget {
 }
 
 class _GoalsScreenState extends ConsumerState<GoalsScreen> {
-  String _selectedFilter = 'all'; // all, active, completed
+  String _selectedFilter = 'all';
 
   @override
   Widget build(BuildContext context) {
@@ -18,137 +24,138 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
     final goalStatsAsync = ref.watch(goalStatsProvider);
 
     return Scaffold(
+      backgroundColor: kBackgroundWhite,
       appBar: AppBar(
-        title: const Text('Learning Goals'),
+        backgroundColor: kBackgroundWhite,
+        elevation: 0,
+        centerTitle: true,
+        toolbarHeight: 90,
+        title: Column(
+          children: [
+            const Text(
+              "BTLR",
+              style: TextStyle(
+                fontSize: 34,
+                fontWeight: FontWeight.w900,
+                color: kPrimaryBlue,
+                letterSpacing: -2,
+              ),
+            ),
+            Text(
+              "LEARNING GOALS",
+              style: TextStyle(
+                fontSize: 9,
+                letterSpacing: 3,
+                color: kPrimaryBlue.withOpacity(0.5),
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              ref.read(goalsProvider.notifier).loadGoals();
-            },
+            icon: const Icon(Icons.refresh_rounded, color: kPrimaryBlue),
+            onPressed: () => ref.read(goalsProvider.notifier).loadGoals(),
           ),
         ],
       ),
       body: Column(
         children: [
-          // Stats Banner
-          goalStatsAsync.when(
-            data: (stats) => Container(
-              padding: const EdgeInsets.all(16),
-              color: Theme.of(context).colorScheme.primaryContainer,
+          _StaggeredEntrance(
+            delayIndex: 0,
+            child: goalStatsAsync.when(
+              data: (stats) => Container(
+                margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: kSapphireTintFill,
+                  borderRadius: BorderRadius.circular(kBorderRadius),
+                  border: Border.all(color: kPrimaryBlue.withOpacity(0.05)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _StatItem(label: 'TOTAL', value: '${stats['totalGoals']}'),
+                    _StatItem(label: 'ACTIVE', value: '${stats['inProgress']}'),
+                    _StatItem(label: 'DONE', value: '${stats['completed']}'),
+                    _StatItem(
+                        label: 'RATE',
+                        value: '${((stats['completionRate'] as double) * 100).toStringAsFixed(0)}%'
+                    ),
+                  ],
+                ),
+              ),
+              loading: () => const LinearProgressIndicator(color: kPrimaryBlue),
+              error: (_, __) => const SizedBox(),
+            ),
+          ),
+
+          _StaggeredEntrance(
+            delayIndex: 1,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _StatItem(
-                    label: 'Total',
-                    value: '${stats['totalGoals']}',
+                  _FilterChip(
+                    label: 'ALL',
+                    isSelected: _selectedFilter == 'all',
+                    onTap: () => setState(() => _selectedFilter = 'all'),
                   ),
-                  _StatItem(
-                    label: 'In Progress',
-                    value: '${stats['inProgress']}',
+                  const SizedBox(width: 12),
+                  _FilterChip(
+                    label: 'ACTIVE',
+                    isSelected: _selectedFilter == 'active',
+                    onTap: () => setState(() => _selectedFilter = 'active'),
                   ),
-                  _StatItem(
-                    label: 'Completed',
-                    value: '${stats['completed']}',
-                  ),
-                  _StatItem(
-                    label: 'Rate',
-                    value: '${((stats['completionRate'] as double) * 100).toStringAsFixed(0)}%',
+                  const SizedBox(width: 12),
+                  _FilterChip(
+                    label: 'COMPLETED',
+                    isSelected: _selectedFilter == 'completed',
+                    onTap: () => setState(() => _selectedFilter = 'completed'),
                   ),
                 ],
               ),
             ),
-            loading: () => const LinearProgressIndicator(),
-            error: (_, _) => const SizedBox(),
           ),
 
-          // Filter Chips
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                FilterChip(
-                  label: const Text('All'),
-                  selected: _selectedFilter == 'all',
-                  onSelected: (selected) {
-                    setState(() => _selectedFilter = 'all');
-                  },
-                ),
-                const SizedBox(width: 8),
-                FilterChip(
-                  label: const Text('Active'),
-                  selected: _selectedFilter == 'active',
-                  onSelected: (selected) {
-                    setState(() => _selectedFilter = 'active');
-                  },
-                ),
-                const SizedBox(width: 8),
-                FilterChip(
-                  label: const Text('Completed'),
-                  selected: _selectedFilter == 'completed',
-                  onSelected: (selected) {
-                    setState(() => _selectedFilter = 'completed');
-                  },
-                ),
-              ],
-            ),
-          ),
+          const SizedBox(height: 16),
 
-          // Goals List
           Expanded(
             child: goalsAsync.when(
               data: (goals) {
                 final filteredGoals = _filterGoals(goals);
-                
-                if (filteredGoals.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.flag_outlined,
-                          size: 64,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No goals yet',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Tap + to create your first goal',
-                          style: TextStyle(color: Colors.grey[600]),
-                        ),
-                      ],
-                    ),
-                  );
-                }
+                if (filteredGoals.isEmpty) return _EmptyGoalsState();
 
                 return RefreshIndicator(
+                  color: kPrimaryBlue,
                   onRefresh: () => ref.read(goalsProvider.notifier).loadGoals(),
                   child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
                     itemCount: filteredGoals.length,
                     itemBuilder: (context, index) {
-                      final goal = filteredGoals[index];
-                      return _GoalCard(goal: goal);
+                      return _StaggeredEntrance(
+                        delayIndex: index + 2,
+                        child: _GoalCard(goal: filteredGoals[index]),
+                      );
                     },
                   ),
                 );
               },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) => Center(
-                child: Text('Error: $error'),
-              ),
+              loading: () => const Center(child: CircularProgressIndicator(color: kPrimaryBlue)),
+              error: (err, _) => Center(child: Text('Error: $err', style: const TextStyle(color: kPrimaryBlue))),
             ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: kPrimaryBlue,
         onPressed: () => _showAddGoalDialog(context),
-        icon: const Icon(Icons.add),
-        label: const Text('Add Goal'),
+        icon: const Icon(Icons.add_rounded, color: Colors.white),
+        label: const Text(
+            'ADD GOAL',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1.5)
+        ),
       ),
     );
   }
@@ -156,9 +163,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
   List<dynamic> _filterGoals(List<dynamic> goals) {
     switch (_selectedFilter) {
       case 'active':
-        return goals.where((g) => 
-          g.status == 'in_progress' || g.status == 'not_started'
-        ).toList();
+        return goals.where((g) => g.status == 'in_progress' || g.status == 'not_started').toList();
       case 'completed':
         return goals.where((g) => g.status == 'completed').toList();
       default:
@@ -176,48 +181,54 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Text('Add Learning Goal'),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          backgroundColor: kBackgroundWhite,
+          title: const Text(
+              'NEW LEARNING GOAL',
+              style: TextStyle(color: kPrimaryBlue, fontWeight: FontWeight.w900, letterSpacing: 1)
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: titleController,
-                  decoration: const InputDecoration(
-                    labelText: 'Title',
-                    hintText: 'e.g., Learn Flutter',
-                  ),
+                  cursorColor: kPrimaryBlue,
+                  decoration: const InputDecoration(labelText: 'TITLE', hintText: 'e.g., Mastering Flutter'),
                 ),
                 const SizedBox(height: 16),
+                // --- RESTORED DESCRIPTION FIELD ---
                 TextField(
                   controller: descriptionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Description (optional)',
-                  ),
+                  cursorColor: kPrimaryBlue,
                   maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'DESCRIPTION',
+                    hintText: 'What do you want to achieve?',
+                  ),
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  initialValue: category,
-                  decoration: const InputDecoration(labelText: 'Category'),
+                  value: category,
+                  decoration: const InputDecoration(labelText: 'CATEGORY'),
                   items: const [
                     DropdownMenuItem(value: 'technical_skill', child: Text('Technical Skill')),
                     DropdownMenuItem(value: 'project', child: Text('Project')),
                     DropdownMenuItem(value: 'certification', child: Text('Certification')),
                     DropdownMenuItem(value: 'soft_skill', child: Text('Soft Skill')),
                   ],
-                  onChanged: (value) => setState(() => category = value!),
+                  onChanged: (v) => setState(() => category = v!),
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  initialValue: priority,
-                  decoration: const InputDecoration(labelText: 'Priority'),
+                  value: priority,
+                  decoration: const InputDecoration(labelText: 'PRIORITY'),
                   items: const [
                     DropdownMenuItem(value: 'high', child: Text('High')),
                     DropdownMenuItem(value: 'medium', child: Text('Medium')),
                     DropdownMenuItem(value: 'low', child: Text('Low')),
                   ],
-                  onChanged: (value) => setState(() => priority = value!),
+                  onChanged: (v) => setState(() => priority = v!),
                 ),
               ],
             ),
@@ -225,29 +236,21 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: const Text('CANCEL', style: TextStyle(color: kPrimaryBlue)),
             ),
             FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: kPrimaryBlue),
               onPressed: () async {
                 if (titleController.text.isEmpty) return;
-
                 await ref.read(goalsProvider.notifier).createGoal(
                   title: titleController.text,
                   category: category,
                   priority: priority,
-                  description: descriptionController.text.isEmpty 
-                      ? null 
-                      : descriptionController.text,
+                  description: descriptionController.text.isEmpty ? null : descriptionController.text,
                 );
-
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Goal created!')),
-                  );
-                }
+                if (context.mounted) Navigator.pop(context);
               },
-              child: const Text('Add'),
+              child: const Text('ADD'),
             ),
           ],
         ),
@@ -256,29 +259,18 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
   }
 }
 
-class _StatItem extends StatelessWidget {
-  final String label;
-  final String value;
+// --- SHARED UI HELPERS ---
 
-  const _StatItem({
-    required this.label,
-    required this.value,
-  });
+class _StatItem extends StatelessWidget {
+  final String label, value;
+  const _StatItem({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(
-          value,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-        ),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
+        Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: kPrimaryBlue)),
+        Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: kPrimaryBlue.withOpacity(0.4), letterSpacing: 1)),
       ],
     );
   }
@@ -286,7 +278,6 @@ class _StatItem extends StatelessWidget {
 
 class _GoalCard extends ConsumerWidget {
   final dynamic goal;
-
   const _GoalCard({required this.goal});
 
   @override
@@ -295,32 +286,36 @@ class _GoalCard extends ConsumerWidget {
         ? (goal.actualHours / goal.estimatedHours).clamp(0.0, 1.0)
         : 0.0;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: kSapphireTintFill,
+        borderRadius: BorderRadius.circular(kBorderRadius),
+        border: Border.all(color: kPrimaryBlue.withOpacity(0.05)),
+      ),
       child: InkWell(
         onTap: () => _showGoalDetails(context, ref, goal),
+        borderRadius: BorderRadius.circular(kBorderRadius),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  _PriorityIndicator(priority: goal.priority),
+                  _PriorityDot(priority: goal.priority),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          goal.title,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                            goal.title.toUpperCase(),
+                            style: const TextStyle(fontWeight: FontWeight.w900, color: kPrimaryBlue, fontSize: 16)
                         ),
                         Text(
-                          _getCategoryLabel(goal.category),
-                          style: Theme.of(context).textTheme.bodySmall,
+                            _getCategoryLabel(goal.category).toUpperCase(),
+                            style: TextStyle(color: kPrimaryBlue.withOpacity(0.5), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)
                         ),
                       ],
                     ),
@@ -332,31 +327,26 @@ class _GoalCard extends ConsumerWidget {
                 const SizedBox(height: 8),
                 Text(
                   goal.description,
-                  style: TextStyle(color: Colors.grey[600]),
+                  style: TextStyle(color: kPrimaryBlue.withOpacity(0.6), fontSize: 13),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
               if (goal.estimatedHours != null) ...[
-                const SizedBox(height: 12),
-                LinearProgressIndicator(value: progress),
-                const SizedBox(height: 4),
-                Text(
-                  '${goal.actualHours.toStringAsFixed(1)} / ${goal.estimatedHours.toStringAsFixed(1)} hours',
-                  style: Theme.of(context).textTheme.bodySmall,
+                const SizedBox(height: 20),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: LinearProgressIndicator(
+                      value: progress,
+                      backgroundColor: kPrimaryBlue.withOpacity(0.1),
+                      color: kPrimaryBlue,
+                      minHeight: 6
+                  ),
                 ),
-              ],
-              if (goal.deadline != null) ...[
                 const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Due: ${_formatDate(goal.deadline)}',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                    ),
-                  ],
+                Text(
+                    '${goal.actualHours.toStringAsFixed(1)} / ${goal.estimatedHours.toStringAsFixed(1)} HOURS',
+                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: kPrimaryBlue)
                 ),
               ],
             ],
@@ -369,61 +359,48 @@ class _GoalCard extends ConsumerWidget {
   void _showGoalDetails(BuildContext context, WidgetRef ref, dynamic goal) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: kBackgroundWhite,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(30))),
       isScrollControlled: true,
       builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        maxChildSize: 0.9,
-        minChildSize: 0.4,
+        initialChildSize: 0.5,
         expand: false,
         builder: (context, scrollController) => Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(32),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                goal.title,
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: 8),
+              Text(goal.title.toUpperCase(), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: kPrimaryBlue)),
+              const SizedBox(height: 12),
               _StatusChip(status: goal.status),
-              const SizedBox(height: 16),
-              if (goal.description != null) ...[
-                Text(goal.description),
-                const SizedBox(height: 16),
-              ],
+              const SizedBox(height: 20),
+              if (goal.description != null)
+                Text(goal.description, style: TextStyle(color: kPrimaryBlue.withOpacity(0.7), fontSize: 16)),
               const Spacer(),
               Row(
                 children: [
                   if (goal.status != 'completed')
                     Expanded(
                       child: FilledButton.icon(
+                        style: FilledButton.styleFrom(backgroundColor: kPrimaryBlue, padding: const EdgeInsets.symmetric(vertical: 18)),
                         onPressed: () async {
                           await ref.read(goalsProvider.notifier).completeGoal(goal.id);
-                          if (context.mounted) {
-                            Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Goal completed! 🎉')),
-                            );
-                          }
+                          if (context.mounted) Navigator.pop(context);
                         },
-                        icon: const Icon(Icons.check),
-                        label: const Text('Complete'),
+                        icon: const Icon(Icons.check_rounded),
+                        label: const Text('COMPLETE'),
                       ),
                     ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(foregroundColor: kPrimaryBlue, padding: const EdgeInsets.symmetric(vertical: 18)),
                       onPressed: () async {
                         await ref.read(goalsProvider.notifier).deleteGoal(goal.id);
-                        if (context.mounted) {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Goal deleted')),
-                          );
-                        }
+                        if (context.mounted) Navigator.pop(context);
                       },
-                      icon: const Icon(Icons.delete),
-                      label: const Text('Delete'),
+                      icon: const Icon(Icons.delete_outline_rounded),
+                      label: const Text('DELETE'),
                     ),
                   ),
                 ],
@@ -435,90 +412,109 @@ class _GoalCard extends ConsumerWidget {
     );
   }
 
-  String _getCategoryLabel(String category) {
-    switch (category) {
-      case 'technical_skill':
-        return 'Technical Skill';
-      case 'soft_skill':
-        return 'Soft Skill';
-      case 'project':
-        return 'Project';
-      case 'certification':
-        return 'Certification';
-      default:
-        return category;
-    }
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
-  }
+  String _getCategoryLabel(String category) => category.replaceAll('_', ' ');
 }
 
-class _PriorityIndicator extends StatelessWidget {
-  final String priority;
-
-  const _PriorityIndicator({required this.priority});
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  const _FilterChip({required this.label, required this.isSelected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    Color color;
-    switch (priority) {
-      case 'high':
-        color = Colors.red;
-        break;
-      case 'medium':
-        color = Colors.orange;
-        break;
-      default:
-        color = Colors.green;
-    }
-
-    return Container(
-      width: 4,
-      height: 40,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(2),
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? kPrimaryBlue : kSapphireTintFill,
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: Text(
+            label,
+            style: TextStyle(
+                color: isSelected ? Colors.white : kPrimaryBlue,
+                fontWeight: FontWeight.w900,
+                fontSize: 11,
+                letterSpacing: 1
+            )
+        ),
       ),
     );
   }
 }
 
-class _StatusChip extends StatelessWidget {
-  final String status;
-
-  const _StatusChip({required this.status});
-
+class _PriorityDot extends StatelessWidget {
+  final String priority;
+  const _PriorityDot({required this.priority});
   @override
   Widget build(BuildContext context) {
-    Color color;
-    String label;
+    Color c = priority == 'high' ? Colors.redAccent : (priority == 'medium' ? Colors.orangeAccent : Colors.greenAccent);
+    return Container(width: 8, height: 8, decoration: BoxDecoration(color: c, shape: BoxShape.circle));
+  }
+}
 
-    switch (status) {
-      case 'completed':
-        color = Colors.green;
-        label = 'Completed';
-        break;
-      case 'in_progress':
-        color = Colors.blue;
-        label = 'In Progress';
-        break;
-      case 'paused':
-        color = Colors.orange;
-        label = 'Paused';
-        break;
-      default:
-        color = Colors.grey;
-        label = 'Not Started';
-    }
-
-    return Chip(
-      label: Text(label, style: const TextStyle(fontSize: 12)),
-      backgroundColor: color.withOpacity(0.2),
-      labelStyle: TextStyle(color: color),
-      padding: EdgeInsets.zero,
-      visualDensity: VisualDensity.compact,
+class _StatusChip extends StatelessWidget {
+  final String status;
+  const _StatusChip({required this.status});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(color: kPrimaryBlue.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+      child: Text(
+          status.toUpperCase().replaceAll('_', ' '),
+          style: const TextStyle(color: kPrimaryBlue, fontSize: 9, fontWeight: FontWeight.w900)
+      ),
     );
   }
+}
+
+class _StaggeredEntrance extends StatefulWidget {
+  final Widget child;
+  final int delayIndex;
+  const _StaggeredEntrance({required this.child, required this.delayIndex});
+  @override
+  State<_StaggeredEntrance> createState() => _StaggeredEntranceState();
+}
+
+class _StaggeredEntranceState extends State<_StaggeredEntrance> {
+  bool _visible = false;
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(Duration(milliseconds: 150 * widget.delayIndex), () {
+      if (mounted) setState(() => _visible = true);
+    });
+  }
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 1000),
+      opacity: _visible ? 1.0 : 0.0,
+      curve: Curves.easeOutQuart,
+      child: AnimatedPadding(
+        duration: const Duration(milliseconds: 1000),
+        curve: Curves.easeOutQuart,
+        padding: EdgeInsets.only(top: _visible ? 0 : 25),
+        child: widget.child,
+      ),
+    );
+  }
+}
+
+class _EmptyGoalsState extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => Center(
+      child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.flag_rounded, size: 64, color: kPrimaryBlue),
+            const SizedBox(height: 16),
+            const Text("NO GOALS SET YET", style: TextStyle(fontWeight: FontWeight.w900, color: kPrimaryBlue, letterSpacing: 1))
+          ]
+      )
+  );
 }

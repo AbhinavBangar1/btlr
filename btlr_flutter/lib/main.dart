@@ -4,7 +4,7 @@ import 'config/theme.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'providers/auth_provider.dart';
-
+import 'screens/splash_screen.dart';
 void main() {
   runApp(
     const ProviderScope(
@@ -20,13 +20,15 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isAuthenticated = ref.watch(isAuthenticatedProvider);
 
-    return MaterialApp(
-      title: 'Student Butler',
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
-      debugShowCheckedModeBanner: false,
-      home: isAuthenticated ? const HomeScreen() : const LoginScreen(),
-    );
+    return // Inside your MaterialApp/ProviderScope
+      MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'BTLR',
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF274B7F)),
+          useMaterial3: true,
+        ),
+        home: SplashScreen(), // Change this from LoginScreen to SplashScreen
+      );
   }
 }
