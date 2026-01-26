@@ -44,7 +44,7 @@ class PlanningService {
       days: 14,
     );
 
-    // Check if plan already exists
+// Check if plan already exists - DELETE IT FIRST if it does
     final existingPlan = await DailyPlan.db.findFirstRow(
       session,
       where: (t) =>
@@ -53,6 +53,25 @@ class PlanningService {
     );
 
     final planVersion = (existingPlan?.version ?? 0) + 1;
+
+    // Delete existing plan and its blocks if regenerating
+    if (existingPlan != null) {
+      session.log('Found existing plan ${existingPlan.id}, deleting it first');
+
+      // Delete time blocks first (foreign key constraint)
+      await TimeBlock.db.deleteWhere(
+        session,
+        where: (t) => t.dailyPlanId.equals(existingPlan.id!),
+      );
+
+      // Delete the plan
+      await DailyPlan.db.deleteWhere(
+        session,
+        where: (t) => t.id.equals(existingPlan.id!),
+      );
+
+      session.log('Deleted old plan and blocks');
+    }
 
     // Create new plan
     final plan = DailyPlan(
@@ -65,14 +84,7 @@ class PlanningService {
     );
 
     final savedPlan = await DailyPlan.db.insertRow(session, plan);
-
-    // Delete old time blocks if regenerating
-    if (existingPlan != null) {
-      await TimeBlock.db.deleteWhere(
-        session,
-        where: (t) => t.dailyPlanId.equals(existingPlan.id),
-      );
-    }
+    session.log('Created new plan ${savedPlan.id} version $planVersion');
 
     // Generate time blocks
     final timeBlocks = await _generateTimeBlocks(

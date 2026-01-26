@@ -11,37 +11,56 @@ class ScheduleService {
     DateTime startDate,
     DateTime endDate,
   ) async {
-    final recurringEvents = await AcademicSchedule.db.find(
-      session,
-      where: (t) =>
-          t.studentProfileId.equals(studentProfileId) &
-          t.isRecurring.equals(true) &
-          t.deletedAt.equals(null),
-    );
-
-    final expandedEvents = <Map<String, dynamic>>[];
-
-    for (final event in recurringEvents) {
-      if (event.rrule == null) continue;
-
-      final occurrences = _parseRRuleSimple(
-        event.rrule!,
-        event.startTime,
-        event.endTime,
-        startDate,
-        endDate,
+    try {
+      session.log('Expanding recurring events from $startDate to $endDate');
+      
+      final recurringEvents = await AcademicSchedule.db.find(
+        session,
+        where: (t) =>
+            t.studentProfileId.equals(studentProfileId) &
+            t.isRecurring.equals(true) &
+            t.deletedAt.equals(null),
       );
 
-      for (final occurrence in occurrences) {
-        expandedEvents.add({
-          'event': event,
-          'startTime': occurrence['start'],
-          'endTime': occurrence['end'],
-        });
-      }
-    }
+      session.log('Found ${recurringEvents.length} recurring events');
+      final expandedEvents = <Map<String, dynamic>>[];
 
-    return expandedEvents;
+      for (final event in recurringEvents) {
+        if (event.rrule == null || event.rrule!.isEmpty) {
+          session.log('Skipping event ${event.id}: no RRULE', level: LogLevel.warning);
+          continue;
+        }
+
+        try {
+          final occurrences = _parseRRuleSimple(
+            event.rrule!,
+            event.startTime,
+            event.endTime,
+            startDate,
+            endDate,
+          );
+
+          session.log('Event ${event.id} generated ${occurrences.length} occurrences');
+
+          for (final occurrence in occurrences) {
+            expandedEvents.add({
+              'event': event,
+              'startTime': occurrence['start'],
+              'endTime': occurrence['end'],
+            });
+          }
+        } catch (e) {
+          session.log('Error parsing RRULE for event ${event.id}: $e', level: LogLevel.error);
+          // Continue with other events instead of failing completely
+        }
+      }
+
+      return expandedEvents;
+    } catch (e, stack) {
+      session.log('Error in expandRecurringEvents: $e', level: LogLevel.error);
+      session.log('Stack trace: $stack', level: LogLevel.error);
+      rethrow;
+    }
   }
 
   /// Simple RRULE parser (supports basic weekly and daily recurrence)
@@ -55,63 +74,134 @@ class ScheduleService {
   ) {
     final occurrences = <Map<String, DateTime>>[];
 
-    // Parse RRULE components
-    final parts = rrule.split(';');
-    String? freq;
-    List<String>? byDay;
-    int interval = 1;
-    DateTime? until;
-    int? count;
+    try {
+      // Parse RRULE components
+      final parts = rrule.split(';');
+      String? freq;
+      List<String>? byDay;
+      int interval = 1;
+      DateTime? until;
+      int? count;
 
-    for (final part in parts) {
-      if (part.startsWith('FREQ=')) {
-        freq = part.substring(5);
-      } else if (part.startsWith('BYDAY=')) {
-        byDay = part.substring(6).split(',');
-      } else if (part.startsWith('INTERVAL=')) {
-        interval = int.parse(part.substring(9));
-      } else if (part.startsWith('UNTIL=')) {
-        // Parse UNTIL date (basic implementation)
-        final untilStr = part.substring(6);
-        try {
-          until = DateTime.parse(untilStr);
-        } catch (e) {
-          // Ignore parse errors
+      for (final part in parts) {
+        final trimmedPart = part.trim();
+        if (trimmedPart.isEmpty) continue;
+
+        if (trimmedPart.startsWith('FREQ=')) {
+          freq = trimmedPart.substring(5);
+        } else if (trimmedPart.startsWith('BYDAY=')) {
+          byDay = trimmedPart.substring(6).split(',').map((d) => d.trim()).toList();
+        } else if (trimmedPart.startsWith('INTERVAL=')) {
+          try {
+            interval = int.parse(trimmedPart.substring(9));
+            if (interval < 1) interval = 1;
+          } catch (e) {
+            interval = 1;
+          }
+        } else if (trimmedPart.startsWith('UNTIL=')) {
+          final untilStr = trimmedPart.substring(6);
+          try {
+            // Try parsing ISO format first
+            until = DateTime.parse(untilStr);
+          } catch (e) {
+            // Try parsing RRULE format: YYYYMMDDTHHMMSSZ
+            try {
+              if (untilStr.length >= 8) {
+                final year = int.parse(untilStr.substring(0, 4));
+                final month = int.parse(untilStr.substring(4, 6));
+                final day = int.parse(untilStr.substring(6, 8));
+                until = DateTime(year, month, day);
+              }
+            } catch (_) {
+              // Ignore parse errors
+            }
+          }
+        } else if (trimmedPart.startsWith('COUNT=')) {
+          try {
+            count = int.parse(trimmedPart.substring(6));
+            if (count < 1) count = null;
+          } catch (e) {
+            count = null;
+          }
         }
-      } else if (part.startsWith('COUNT=')) {
-        count = int.parse(part.substring(6));
       }
-    }
 
-    if (freq == null) return occurrences;
+      if (freq == null) return occurrences;
 
-    // Handle WEEKLY frequency
-    if (freq == 'WEEKLY') {
-      if (byDay == null) return occurrences;
+      // Limit maximum occurrences to prevent infinite loops
+      const maxOccurrences = 1000;
+      int totalGenerated = 0;
 
-      // Map day abbreviations to weekday numbers
-      final dayMap = {
-        'MO': DateTime.monday,
-        'TU': DateTime.tuesday,
-        'WE': DateTime.wednesday,
-        'TH': DateTime.thursday,
-        'FR': DateTime.friday,
-        'SA': DateTime.saturday,
-        'SU': DateTime.sunday,
-      };
+      // Handle WEEKLY frequency
+      if (freq == 'WEEKLY') {
+        if (byDay == null || byDay.isEmpty) return occurrences;
 
-      final targetDays = byDay.map((d) => dayMap[d]!).toSet();
+        // Map day abbreviations to weekday numbers
+        final dayMap = {
+          'MO': DateTime.monday,
+          'TU': DateTime.tuesday,
+          'WE': DateTime.wednesday,
+          'TH': DateTime.thursday,
+          'FR': DateTime.friday,
+          'SA': DateTime.saturday,
+          'SU': DateTime.sunday,
+        };
 
-      // Start from rangeStart
-      var currentDate = rangeStart;
-      int occurrenceCount = 0;
+        final targetDays = <int>{};
+        for (final day in byDay) {
+          final weekday = dayMap[day.toUpperCase()];
+          if (weekday != null) {
+            targetDays.add(weekday);
+          }
+        }
 
-      while (currentDate.isBefore(rangeEnd)) {
-        if (until != null && currentDate.isAfter(until)) break;
-        if (count != null && occurrenceCount >= count) break;
+        if (targetDays.isEmpty) return occurrences;
 
-        if (targetDays.contains(currentDate.weekday)) {
-          // Calculate start and end times for this occurrence
+        // Start from the earlier of rangeStart or originalStart
+        var currentDate = rangeStart.isBefore(originalStart) ? originalStart : rangeStart;
+        int occurrenceCount = 0;
+
+        while (currentDate.isBefore(rangeEnd) && totalGenerated < maxOccurrences) {
+          if (until != null && currentDate.isAfter(until)) break;
+          if (count != null && occurrenceCount >= count) break;
+
+          if (targetDays.contains(currentDate.weekday)) {
+            // Calculate start and end times for this occurrence
+            final occurrenceStart = DateTime(
+              currentDate.year,
+              currentDate.month,
+              currentDate.day,
+              originalStart.hour,
+              originalStart.minute,
+            );
+
+            final duration = originalEnd.difference(originalStart);
+            final occurrenceEnd = occurrenceStart.add(duration);
+
+            // Only add if within range
+            if (occurrenceStart.isBefore(rangeEnd) && occurrenceEnd.isAfter(rangeStart)) {
+              occurrences.add({
+                'start': occurrenceStart,
+                'end': occurrenceEnd,
+              });
+              occurrenceCount++;
+              totalGenerated++;
+            }
+          }
+
+          currentDate = currentDate.add(const Duration(days: 1));
+        }
+      }
+
+      // Handle DAILY frequency
+      else if (freq == 'DAILY') {
+        var currentDate = rangeStart.isBefore(originalStart) ? originalStart : rangeStart;
+        int occurrenceCount = 0;
+
+        while (currentDate.isBefore(rangeEnd) && totalGenerated < maxOccurrences) {
+          if (until != null && currentDate.isAfter(until)) break;
+          if (count != null && occurrenceCount >= count) break;
+
           final occurrenceStart = DateTime(
             currentDate.year,
             currentDate.month,
@@ -123,88 +213,71 @@ class ScheduleService {
           final duration = originalEnd.difference(originalStart);
           final occurrenceEnd = occurrenceStart.add(duration);
 
-          occurrences.add({
-            'start': occurrenceStart,
-            'end': occurrenceEnd,
-          });
+          if (occurrenceStart.isBefore(rangeEnd)) {
+            occurrences.add({
+              'start': occurrenceStart,
+              'end': occurrenceEnd,
+            });
+            occurrenceCount++;
+            totalGenerated++;
+          }
 
-          occurrenceCount++;
+          currentDate = currentDate.add(Duration(days: interval));
         }
-
-        currentDate = currentDate.add(Duration(days: 1));
       }
-    }
 
-    // Handle DAILY frequency
-    else if (freq == 'DAILY') {
-      var currentDate = rangeStart;
-      int occurrenceCount = 0;
+      // Handle MONTHLY frequency
+      else if (freq == 'MONTHLY') {
+        var currentDate = rangeStart.isBefore(originalStart) ? originalStart : rangeStart;
+        int occurrenceCount = 0;
 
-      while (currentDate.isBefore(rangeEnd)) {
-        if (until != null && currentDate.isAfter(until)) break;
-        if (count != null && occurrenceCount >= count) break;
+        while (currentDate.isBefore(rangeEnd) && totalGenerated < maxOccurrences) {
+          if (until != null && currentDate.isAfter(until)) break;
+          if (count != null && occurrenceCount >= count) break;
 
-        final occurrenceStart = DateTime(
-          currentDate.year,
-          currentDate.month,
-          currentDate.day,
-          originalStart.hour,
-          originalStart.minute,
-        );
+          try {
+            final occurrenceStart = DateTime(
+              currentDate.year,
+              currentDate.month,
+              originalStart.day,
+              originalStart.hour,
+              originalStart.minute,
+            );
 
-        final duration = originalEnd.difference(originalStart);
-        final occurrenceEnd = occurrenceStart.add(duration);
+            // Check if date is valid (e.g., Feb 30 doesn't exist)
+            if (occurrenceStart.month == currentDate.month && occurrenceStart.isBefore(rangeEnd)) {
+              final duration = originalEnd.difference(originalStart);
+              final occurrenceEnd = occurrenceStart.add(duration);
 
-        occurrences.add({
-          'start': occurrenceStart,
-          'end': occurrenceEnd,
-        });
+              occurrences.add({
+                'start': occurrenceStart,
+                'end': occurrenceEnd,
+              });
+              occurrenceCount++;
+              totalGenerated++;
+            }
+          } catch (e) {
+            // Skip invalid dates
+          }
 
-        occurrenceCount++;
-        currentDate = currentDate.add(Duration(days: interval));
-      }
-    }
-
-    // Handle MONTHLY frequency (basic)
-    else if (freq == 'MONTHLY') {
-      var currentDate = rangeStart;
-      int occurrenceCount = 0;
-
-      while (currentDate.isBefore(rangeEnd)) {
-        if (until != null && currentDate.isAfter(until)) break;
-        if (count != null && occurrenceCount >= count) break;
-
-        final occurrenceStart = DateTime(
-          currentDate.year,
-          currentDate.month,
-          originalStart.day,
-          originalStart.hour,
-          originalStart.minute,
-        );
-
-        // Check if date is valid (e.g., Feb 30 doesn't exist)
-        if (occurrenceStart.month == currentDate.month) {
-          final duration = originalEnd.difference(originalStart);
-          final occurrenceEnd = occurrenceStart.add(duration);
-
-          occurrences.add({
-            'start': occurrenceStart,
-            'end': occurrenceEnd,
-          });
-
-          occurrenceCount++;
+          // Move to next month
+          try {
+            currentDate = DateTime(
+              currentDate.year,
+              currentDate.month + interval,
+              1, // Use day 1 to avoid issues
+            );
+          } catch (e) {
+            break; // Exit if we can't calculate next month
+          }
         }
-
-        // Move to next month
-        currentDate = DateTime(
-          currentDate.year,
-          currentDate.month + interval,
-          currentDate.day,
-        );
       }
-    }
 
-    return occurrences;
+      return occurrences;
+    } catch (e) {
+      // Return empty list instead of throwing
+      return occurrences;
+    }
   }
 
   /// Detect conflicts between time blocks and academic events
@@ -213,80 +286,95 @@ class ScheduleService {
     int studentProfileId,
     DateTime date,
   ) async {
-    final conflicts = <Map<String, dynamic>>[];
-    final normalizedDate = DateTime(date.year, date.month, date.day);
+    try {
+      session.log('Detecting conflicts for $date');
+      final conflicts = <Map<String, dynamic>>[];
+      final normalizedDate = DateTime(date.year, date.month, date.day);
 
-    // Get all time blocks for this date
-    final dailyPlan = await DailyPlan.db.findFirstRow(
-      session,
-      where: (t) =>
-          t.studentProfileId.equals(studentProfileId) &
-          t.planDate.equals(normalizedDate),
-    );
+      // Get all time blocks for this date
+      final dailyPlan = await DailyPlan.db.findFirstRow(
+        session,
+        where: (t) =>
+            t.studentProfileId.equals(studentProfileId) &
+            t.planDate.equals(normalizedDate),
+      );
 
-    if (dailyPlan == null) return conflicts;
+      if (dailyPlan == null) {
+        session.log('No daily plan found for $date');
+        return conflicts;
+      }
 
-    final timeBlocks = await TimeBlock.db.find(
-      session,
-      where: (t) => t.dailyPlanId.equals(dailyPlan.id),
-      orderBy: (t) => t.startTime,
-    );
+      final timeBlocks = await TimeBlock.db.find(
+        session,
+        where: (t) => t.dailyPlanId.equals(dailyPlan.id!),
+        orderBy: (t) => t.startTime,
+      );
 
-    // Get academic events for this date
-    final startOfDay = DateTime(date.year, date.month, date.day);
-    final endOfDay = startOfDay.add(const Duration(days: 1));
+      session.log('Found ${timeBlocks.length} time blocks');
 
-    final academicEvents = await AcademicSchedule.db.find(
-      session,
-      where: (t) =>
-          t.studentProfileId.equals(studentProfileId) &
-          t.startTime.between(startOfDay, endOfDay) &
-          t.deletedAt.equals(null),
-    );
+      // Get academic events for this date
+      final startOfDay = DateTime(date.year, date.month, date.day);
+      final endOfDay = startOfDay.add(const Duration(days: 1));
 
-    // Check for overlaps
-    for (final block in timeBlocks) {
-      for (final event in academicEvents) {
-        if (_isOverlapping(
-          block.startTime,
-          block.endTime,
-          event.startTime,
-          event.endTime,
-        )) {
-          conflicts.add({
-            'timeBlock': block,
-            'academicEvent': event,
-            'type': 'overlap',
-            'severity': 'high',
-          });
+      final academicEvents = await AcademicSchedule.db.find(
+        session,
+        where: (t) =>
+            t.studentProfileId.equals(studentProfileId) &
+            t.startTime.between(startOfDay, endOfDay) &
+            t.deletedAt.equals(null),
+      );
+
+      session.log('Found ${academicEvents.length} academic events');
+
+      // Check for overlaps with academic events
+      for (final block in timeBlocks) {
+        for (final event in academicEvents) {
+          if (_isOverlapping(
+            block.startTime,
+            block.endTime,
+            event.startTime,
+            event.endTime,
+          )) {
+            conflicts.add({
+              'timeBlock': block,
+              'academicEvent': event,
+              'type': 'overlap',
+              'severity': 'high',
+            });
+          }
+        }
+
+        // Check for back-to-back conflicts (no break time)
+        for (final otherBlock in timeBlocks) {
+          if (block.id == otherBlock.id) continue;
+
+          if (block.endTime.isAtSameMomentAs(otherBlock.startTime)) {
+            conflicts.add({
+              'timeBlock': block,
+              'nextBlock': otherBlock,
+              'type': 'no_break',
+              'severity': 'low',
+            });
+          }
         }
       }
 
-      // Check for back-to-back conflicts (no break time)
-      for (final otherBlock in timeBlocks) {
-        if (block.id == otherBlock.id) continue;
-
-        if (block.endTime == otherBlock.startTime) {
-          conflicts.add({
-            'timeBlock': block,
-            'nextBlock': otherBlock,
-            'type': 'no_break',
-            'severity': 'low',
-          });
-        }
+      // Check for too many tasks in one day
+      if (timeBlocks.length > 10) {
+        conflicts.add({
+          'type': 'overload',
+          'severity': 'medium',
+          'message': 'Too many tasks scheduled (${timeBlocks.length} blocks)',
+        });
       }
-    }
 
-    // Check for too many tasks in one day
-    if (timeBlocks.length > 10) {
-      conflicts.add({
-        'type': 'overload',
-        'severity': 'medium',
-        'message': 'Too many tasks scheduled (${timeBlocks.length} blocks)',
-      });
+      session.log('Detected ${conflicts.length} conflicts');
+      return conflicts;
+    } catch (e, stack) {
+      session.log('Error in detectConflicts: $e', level: LogLevel.error);
+      session.log('Stack trace: $stack', level: LogLevel.error);
+      return [];
     }
-
-    return conflicts;
   }
 
   /// Check if two time ranges overlap
@@ -311,30 +399,41 @@ class ScheduleService {
     bool isRecurring = false,
     String? rrule,
   }) async {
-    // Validate type
-    final validTypes = ['class', 'exam', 'lab', 'workshop'];
-    if (!validTypes.contains(type)) {
-      throw Exception('Invalid type. Must be one of: ${validTypes.join(", ")}');
+    try {
+      // Validate type
+      final validTypes = ['class', 'exam', 'lab', 'workshop'];
+      if (!validTypes.contains(type)) {
+        throw Exception('Invalid type. Must be one of: ${validTypes.join(", ")}');
+      }
+
+      // Validate times
+      if (endTime.isBefore(startTime) || endTime.isAtSameMomentAs(startTime)) {
+        throw Exception('End time must be after start time');
+      }
+
+      // Validate RRULE if provided
+      if (isRecurring && (rrule == null || rrule.isEmpty)) {
+        throw Exception('RRULE is required for recurring events');
+      }
+
+      final schedule = AcademicSchedule(
+        studentProfileId: studentProfileId,
+        title: title,
+        type: type,
+        location: location,
+        rrule: rrule,
+        startTime: startTime,
+        endTime: endTime,
+        isRecurring: isRecurring,
+        createdAt: DateTime.now(),
+      );
+
+      return await AcademicSchedule.db.insertRow(session, schedule);
+    } catch (e, stack) {
+      session.log('Error creating schedule item: $e', level: LogLevel.error);
+      session.log('Stack trace: $stack', level: LogLevel.error);
+      rethrow;
     }
-
-    // Validate times
-    if (endTime.isBefore(startTime) || endTime.isAtSameMomentAs(startTime)) {
-      throw Exception('End time must be after start time');
-    }
-
-    final schedule = AcademicSchedule(
-      studentProfileId: studentProfileId,
-      title: title,
-      type: type,
-      location: location,
-      rrule: rrule,
-      startTime: startTime,
-      endTime: endTime,
-      isRecurring: isRecurring,
-      createdAt: DateTime.now(),
-    );
-
-    return await AcademicSchedule.db.insertRow(session,schedule);
   }
 
   /// Soft delete an academic schedule item
@@ -342,13 +441,19 @@ class ScheduleService {
     Session session,
     int scheduleId,
   ) async {
-    final schedule = await AcademicSchedule.db.findById(session,scheduleId);
-    if (schedule == null) {
-      throw Exception('Schedule item not found');
-    }
+    try {
+      final schedule = await AcademicSchedule.db.findById(session, scheduleId);
+      if (schedule == null) {
+        throw Exception('Schedule item not found');
+      }
 
-    schedule.deletedAt = DateTime.now();
-    return await AcademicSchedule.db.updateRow(session,schedule);
+      schedule.deletedAt = DateTime.now();
+      return await AcademicSchedule.db.updateRow(session, schedule);
+    } catch (e, stack) {
+      session.log('Error deleting schedule item: $e', level: LogLevel.error);
+      session.log('Stack trace: $stack', level: LogLevel.error);
+      rethrow;
+    }
   }
 
   /// Get all academic events for a week
@@ -357,61 +462,78 @@ class ScheduleService {
     int studentProfileId,
     DateTime weekStart,
   ) async {
-    final weekEnd = weekStart.add(const Duration(days: 7));
+    try {
+      final weekEnd = weekStart.add(const Duration(days: 7));
 
-    // Get non-recurring events
-    final nonRecurring = await AcademicSchedule.db.find(
-      session,
-      where: (t) =>
-          t.studentProfileId.equals(studentProfileId) &
-          t.isRecurring.equals(false) &
-          t.startTime.between(weekStart, weekEnd) &
-          t.deletedAt.equals(null),
-      orderBy: (t) => t.startTime,
-    );
+      session.log('Getting week schedule from $weekStart to $weekEnd');
 
-    // Get recurring events and expand them
-    final recurringEvents = await expandRecurringEvents(
-      session,
-      studentProfileId,
-      weekStart,
-      weekEnd,
-    );
-
-    // Combine non-recurring and expanded recurring events
-    final allEvents = <AcademicSchedule>[...nonRecurring];
-
-    for (final expanded in recurringEvents) {
-      final event = expanded['event'] as AcademicSchedule;
-      final start = expanded['startTime'] as DateTime;
-      final end = expanded['endTime'] as DateTime;
-
-      // Create a copy with adjusted dates
-      final adjustedEvent = AcademicSchedule(
-        id: event.id,
-        studentProfileId: event.studentProfileId,
-        title: event.title,
-        type: event.type,
-        location: event.location,
-        rrule: event.rrule,
-        startTime: start,
-        endTime: end,
-        isRecurring: event.isRecurring,
-        createdAt: event.createdAt,
+      // Get non-recurring events
+      final nonRecurring = await AcademicSchedule.db.find(
+        session,
+        where: (t) =>
+            t.studentProfileId.equals(studentProfileId) &
+            t.isRecurring.equals(false) &
+            t.startTime.between(weekStart, weekEnd) &
+            t.deletedAt.equals(null),
+        orderBy: (t) => t.startTime,
       );
-      allEvents.add(adjustedEvent);
+
+      session.log('Found ${nonRecurring.length} non-recurring events');
+
+      // Get recurring events and expand them
+      final recurringEvents = await expandRecurringEvents(
+        session,
+        studentProfileId,
+        weekStart,
+        weekEnd,
+      );
+
+      session.log('Expanded ${recurringEvents.length} recurring event occurrences');
+
+      // Combine non-recurring and expanded recurring events
+      final allEvents = <AcademicSchedule>[...nonRecurring];
+
+      for (final expanded in recurringEvents) {
+        try {
+          final event = expanded['event'] as AcademicSchedule;
+          final start = expanded['startTime'] as DateTime;
+          final end = expanded['endTime'] as DateTime;
+
+          // Create a copy with adjusted dates
+          final adjustedEvent = AcademicSchedule(
+            id: event.id,
+            studentProfileId: event.studentProfileId,
+            title: event.title,
+            type: event.type,
+            location: event.location,
+            rrule: event.rrule,
+            startTime: start,
+            endTime: end,
+            isRecurring: event.isRecurring,
+            createdAt: event.createdAt,
+          );
+          allEvents.add(adjustedEvent);
+        } catch (e) {
+          session.log('Error processing expanded event: $e', level: LogLevel.warning);
+        }
+      }
+
+      // Sort by start time
+      allEvents.sort((a, b) => a.startTime.compareTo(b.startTime));
+
+      session.log('Returning ${allEvents.length} total events');
+      return allEvents;
+    } catch (e, stack) {
+      session.log('Error in getWeekSchedule: $e', level: LogLevel.error);
+      session.log('Stack trace: $stack', level: LogLevel.error);
+      rethrow;
     }
-
-    // Sort by start time
-    allEvents.sort((a, b) => a.startTime.compareTo(b.startTime));
-
-    return allEvents;
   }
 
   /// Generate RRULE string from parameters
   static String generateRRule({
-    required String frequency, // DAILY, WEEKLY, MONTHLY
-    List<String>? byDay, // ['MO', 'WE', 'FR']
+    required String frequency,
+    List<String>? byDay,
     int interval = 1,
     DateTime? until,
     int? count,
@@ -427,7 +549,6 @@ class ScheduleService {
     }
 
     if (until != null) {
-      // Format: YYYYMMDDTHHMMSSZ
       final untilStr = until.toUtc().toIso8601String()
           .replaceAll('-', '')
           .replaceAll(':', '')
@@ -435,7 +556,7 @@ class ScheduleService {
       parts.add('UNTIL=$untilStr');
     }
 
-    if (count != null) {
+    if (count != null && count > 0) {
       parts.add('COUNT=$count');
     }
 
@@ -448,16 +569,27 @@ class ScheduleService {
     final parts = rrule.split(';');
 
     for (final part in parts) {
-      if (part.startsWith('FREQ=')) {
-        result['frequency'] = part.substring(5);
-      } else if (part.startsWith('BYDAY=')) {
-        result['byDay'] = part.substring(6).split(',');
-      } else if (part.startsWith('INTERVAL=')) {
-        result['interval'] = int.parse(part.substring(9));
-      } else if (part.startsWith('UNTIL=')) {
-        result['until'] = part.substring(6);
-      } else if (part.startsWith('COUNT=')) {
-        result['count'] = int.parse(part.substring(6));
+      final trimmedPart = part.trim();
+      if (trimmedPart.isEmpty) continue;
+
+      if (trimmedPart.startsWith('FREQ=')) {
+        result['frequency'] = trimmedPart.substring(5);
+      } else if (trimmedPart.startsWith('BYDAY=')) {
+        result['byDay'] = trimmedPart.substring(6).split(',');
+      } else if (trimmedPart.startsWith('INTERVAL=')) {
+        try {
+          result['interval'] = int.parse(trimmedPart.substring(9));
+        } catch (e) {
+          result['interval'] = 1;
+        }
+      } else if (trimmedPart.startsWith('UNTIL=')) {
+        result['until'] = trimmedPart.substring(6);
+      } else if (trimmedPart.startsWith('COUNT=')) {
+        try {
+          result['count'] = int.parse(trimmedPart.substring(6));
+        } catch (e) {
+          result['count'] = null;
+        }
       }
     }
 
@@ -470,18 +602,24 @@ class ScheduleService {
     int studentProfileId, {
     int daysAhead = 30,
   }) async {
-    final now = DateTime.now();
-    final futureDate = now.add(Duration(days: daysAhead));
+    try {
+      final now = DateTime.now();
+      final futureDate = now.add(Duration(days: daysAhead));
 
-    return await AcademicSchedule.db.find(
-      session,
-      where: (t) =>
-          t.studentProfileId.equals(studentProfileId) &
-          t.type.equals('exam') &
-          t.startTime.between(now, futureDate) &
-          t.deletedAt.equals(null),
-      orderBy: (t) => t.startTime,
-    );
+      return await AcademicSchedule.db.find(
+        session,
+        where: (t) =>
+            t.studentProfileId.equals(studentProfileId) &
+            t.type.equals('exam') &
+            t.startTime.between(now, futureDate) &
+            t.deletedAt.equals(null),
+        orderBy: (t) => t.startTime,
+      );
+    } catch (e, stack) {
+      session.log('Error getting upcoming exams: $e', level: LogLevel.error);
+      session.log('Stack trace: $stack', level: LogLevel.error);
+      return [];
+    }
   }
 
   /// Find free time slots in a day
@@ -491,98 +629,130 @@ class ScheduleService {
     DateTime date, {
     int minDurationMinutes = 30,
   }) async {
-    final normalizedDate = DateTime(date.year, date.month, date.day);
-    final freeSlots = <Map<String, DateTime>>[];
+    try {
+      session.log('Finding free slots for $date');
+      final normalizedDate = DateTime(date.year, date.month, date.day);
+      final freeSlots = <Map<String, DateTime>>[];
 
-    // Get student profile for wake/sleep times
-    final profile = await StudentProfile.db.findById(session,studentProfileId);
-    if (profile == null) return freeSlots;
-
-    // Parse wake and sleep times
-    final wakeParts = profile.wakeTime.split(':');
-    final sleepParts = profile.sleepTime.split(':');
-
-    final dayStart = DateTime(
-      date.year,
-      date.month,
-      date.day,
-      int.parse(wakeParts[0]),
-      int.parse(wakeParts[1]),
-    );
-
-    final dayEnd = DateTime(
-      date.year,
-      date.month,
-      date.day,
-      int.parse(sleepParts[0]),
-      int.parse(sleepParts[1]),
-    );
-
-    // Get all scheduled events
-    final academicEvents = await AcademicSchedule.db.find(
-      session,
-      where: (t) =>
-          t.studentProfileId.equals(studentProfileId) &
-          t.startTime.between(dayStart, dayEnd) &
-          t.deletedAt.equals(null),
-      orderBy: (t) => t.startTime,
-    );
-
-    // Get time blocks
-    final dailyPlan = await DailyPlan.db.findFirstRow(
-      session,
-      where: (t) =>
-          t.studentProfileId.equals(studentProfileId) &
-          t.planDate.equals(normalizedDate),
-    );
-
-    final timeBlocks = dailyPlan != null
-        ? await TimeBlock.db.find(
-          session,
-            where: (t) => t.dailyPlanId.equals(dailyPlan.id),
-            orderBy: (t) => t.startTime,
-          )
-        : <TimeBlock>[];
-
-    // Combine all busy times
-    final busyTimes = <Map<String, DateTime>>[];
-
-    for (final event in academicEvents) {
-      busyTimes.add({'start': event.startTime, 'end': event.endTime});
-    }
-
-    for (final block in timeBlocks) {
-      busyTimes.add({'start': block.startTime, 'end': block.endTime});
-    }
-
-    // Sort by start time
-    busyTimes.sort((a, b) => a['start']!.compareTo(b['start']!));
-
-    // Find gaps
-    var currentTime = dayStart;
-
-    for (final busy in busyTimes) {
-      final gapDuration = busy['start']!.difference(currentTime).inMinutes;
-
-      if (gapDuration >= minDurationMinutes) {
-        freeSlots.add({
-          'start': currentTime,
-          'end': busy['start']!,
-        });
+      // Get student profile for wake/sleep times
+      final profile = await StudentProfile.db.findById(session, studentProfileId);
+      if (profile == null) {
+        session.log('Student profile not found: $studentProfileId', level: LogLevel.error);
+        return freeSlots;
       }
 
-      currentTime = busy['end']!;
-    }
+      // Parse wake and sleep times with validation
+      final wakeParts = profile.wakeTime.split(':');
+      final sleepParts = profile.sleepTime.split(':');
 
-    // Check time after last event
-    final finalGapDuration = dayEnd.difference(currentTime).inMinutes;
-    if (finalGapDuration >= minDurationMinutes) {
-      freeSlots.add({
-        'start': currentTime,
-        'end': dayEnd,
-      });
-    }
+      if (wakeParts.length < 2 || sleepParts.length < 2) {
+        session.log('Invalid wake/sleep time format', level: LogLevel.error);
+        return freeSlots;
+      }
 
-    return freeSlots;
+      final dayStart = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        int.parse(wakeParts[0]),
+        int.parse(wakeParts[1]),
+      );
+
+      final dayEnd = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        int.parse(sleepParts[0]),
+        int.parse(sleepParts[1]),
+      );
+
+      // Handle sleep time being past midnight
+      final actualDayEnd = dayEnd.isBefore(dayStart) 
+          ? dayEnd.add(const Duration(days: 1)) 
+          : dayEnd;
+
+      // Get all scheduled events
+      final academicEvents = await AcademicSchedule.db.find(
+        session,
+        where: (t) =>
+            t.studentProfileId.equals(studentProfileId) &
+            t.startTime.between(dayStart, actualDayEnd) &
+            t.deletedAt.equals(null),
+        orderBy: (t) => t.startTime,
+      );
+
+      // Get time blocks
+      final dailyPlan = await DailyPlan.db.findFirstRow(
+        session,
+        where: (t) =>
+            t.studentProfileId.equals(studentProfileId) &
+            t.planDate.equals(normalizedDate),
+      );
+
+      final timeBlocks = dailyPlan != null
+          ? await TimeBlock.db.find(
+              session,
+              where: (t) => t.dailyPlanId.equals(dailyPlan.id!),
+              orderBy: (t) => t.startTime,
+            )
+          : <TimeBlock>[];
+
+      // Combine all busy times
+      final busyTimes = <Map<String, DateTime>>[];
+
+      for (final event in academicEvents) {
+        busyTimes.add({'start': event.startTime, 'end': event.endTime});
+      }
+
+      for (final block in timeBlocks) {
+        busyTimes.add({'start': block.startTime, 'end': block.endTime});
+      }
+
+      // Sort by start time
+      busyTimes.sort((a, b) => a['start']!.compareTo(b['start']!));
+
+      // Find gaps
+      var currentTime = dayStart;
+
+      for (final busy in busyTimes) {
+        final busyStart = busy['start']!;
+        final busyEnd = busy['end']!;
+
+        // Skip if busy time is before current time
+        if (busyEnd.isBefore(currentTime) || busyEnd.isAtSameMomentAs(currentTime)) {
+          continue;
+        }
+
+        final gapStart = currentTime.isBefore(busyStart) ? currentTime : busyStart;
+        final gapDuration = busyStart.difference(gapStart).inMinutes;
+
+        if (gapDuration >= minDurationMinutes && gapStart.isBefore(busyStart)) {
+          freeSlots.add({
+            'start': gapStart,
+            'end': busyStart,
+          });
+        }
+
+        currentTime = busyEnd.isAfter(currentTime) ? busyEnd : currentTime;
+      }
+
+      // Check time after last event
+      if (currentTime.isBefore(actualDayEnd)) {
+        final finalGapDuration = actualDayEnd.difference(currentTime).inMinutes;
+        if (finalGapDuration >= minDurationMinutes) {
+          freeSlots.add({
+            'start': currentTime,
+            'end': actualDayEnd,
+          });
+        }
+      }
+
+      session.log('Found ${freeSlots.length} free slots');
+      return freeSlots;
+    } catch (e, stack) {
+      session.log('Error finding free slots: $e', level: LogLevel.error);
+      session.log('Stack trace: $stack', level: LogLevel.error);
+      return [];
+    }
   }
 }
