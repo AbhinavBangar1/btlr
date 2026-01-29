@@ -22,6 +22,7 @@ abstract class ScrapedContent implements _i1.SerializableModel {
     required this.sourceUrl,
     DateTime? scrapedAt,
     bool? isRead,
+    this.metadata,
   }) : scrapedAt = scrapedAt ?? DateTime.now(),
        isRead = isRead ?? false;
 
@@ -34,6 +35,7 @@ abstract class ScrapedContent implements _i1.SerializableModel {
     required String sourceUrl,
     DateTime? scrapedAt,
     bool? isRead,
+    String? metadata,
   }) = _ScrapedContentImpl;
 
   factory ScrapedContent.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -48,6 +50,7 @@ abstract class ScrapedContent implements _i1.SerializableModel {
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['scrapedAt']),
       isRead: jsonSerialization['isRead'] as bool?,
+      metadata: jsonSerialization['metadata'] as String?,
     );
   }
 
@@ -70,6 +73,8 @@ abstract class ScrapedContent implements _i1.SerializableModel {
 
   bool isRead;
 
+  String? metadata;
+
   /// Returns a shallow copy of this [ScrapedContent]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -82,6 +87,7 @@ abstract class ScrapedContent implements _i1.SerializableModel {
     String? sourceUrl,
     DateTime? scrapedAt,
     bool? isRead,
+    String? metadata,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -95,6 +101,7 @@ abstract class ScrapedContent implements _i1.SerializableModel {
       'sourceUrl': sourceUrl,
       'scrapedAt': scrapedAt.toJson(),
       'isRead': isRead,
+      if (metadata != null) 'metadata': metadata,
     };
   }
 
@@ -116,6 +123,7 @@ class _ScrapedContentImpl extends ScrapedContent {
     required String sourceUrl,
     DateTime? scrapedAt,
     bool? isRead,
+    String? metadata,
   }) : super._(
          id: id,
          userId: userId,
@@ -125,6 +133,7 @@ class _ScrapedContentImpl extends ScrapedContent {
          sourceUrl: sourceUrl,
          scrapedAt: scrapedAt,
          isRead: isRead,
+         metadata: metadata,
        );
 
   /// Returns a shallow copy of this [ScrapedContent]
@@ -140,6 +149,7 @@ class _ScrapedContentImpl extends ScrapedContent {
     String? sourceUrl,
     DateTime? scrapedAt,
     bool? isRead,
+    Object? metadata = _Undefined,
   }) {
     return ScrapedContent(
       id: id is int? ? id : this.id,
@@ -150,6 +160,7 @@ class _ScrapedContentImpl extends ScrapedContent {
       sourceUrl: sourceUrl ?? this.sourceUrl,
       scrapedAt: scrapedAt ?? this.scrapedAt,
       isRead: isRead ?? this.isRead,
+      metadata: metadata is String? ? metadata : this.metadata,
     );
   }
 }

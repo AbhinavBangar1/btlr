@@ -116,6 +116,7 @@ student:
   - updateProfile:
   - deleteProfile:
   - listProfiles:
+  - updateProfileLinks:
 voice:
   - processCommand:
   - createNote:

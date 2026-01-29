@@ -1,3 +1,22 @@
+# class: ScrapedContent
+# table: scraped_contents
+# fields:
+#   userId: int
+#   platform: String
+#   title: String
+#   summary: String
+#   sourceUrl: String
+#   scrapedAt: DateTime, default=now
+#   isRead: bool, default=false
+# indexes:
+#   scraped_contents_user_idx:
+#     fields: userId
+#   scraped_contents_platform_idx:
+#     fields: platform
+
+
+
+
 class: ScrapedContent
 table: scraped_contents
 fields:
@@ -8,6 +27,7 @@ fields:
   sourceUrl: String
   scrapedAt: DateTime, default=now
   isRead: bool, default=false
+  metadata: String?  # JSON string for extra profile data
 indexes:
   scraped_contents_user_idx:
     fields: userId

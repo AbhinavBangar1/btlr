@@ -3678,7 +3678,7 @@ class _ScrapingEndpoint {
     _i1.TestSessionBuilder sessionBuilder,
     int userId,
     String platform,
-    String customUrl,
+    String? customUrl,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -4033,9 +4033,9 @@ class _StudentEndpoint {
     });
   }
 
-  _i3.Future<_i14.StudentProfile> updateProfile(
+  _i3.Future<_i14.StudentProfile?> updateProfile(
     _i1.TestSessionBuilder sessionBuilder,
-    int id,
+    int studentId,
     String? name,
     String? timezone,
     String? wakeTime,
@@ -4043,6 +4043,11 @@ class _StudentEndpoint {
     int? preferredStudyBlockMinutes,
     int? preferredBreakMinutes,
     String? preferredStudyTimes,
+    String? githubUsername,
+    String? leetcodeUsername,
+    String? codeforcesUsername,
+    String? linkedinUrl,
+    String? portfolioUrl,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -4056,7 +4061,7 @@ class _StudentEndpoint {
           endpointPath: 'student',
           methodName: 'updateProfile',
           parameters: _i1.testObjectToJson({
-            'id': id,
+            'studentId': studentId,
             'name': name,
             'timezone': timezone,
             'wakeTime': wakeTime,
@@ -4064,6 +4069,11 @@ class _StudentEndpoint {
             'preferredStudyBlockMinutes': preferredStudyBlockMinutes,
             'preferredBreakMinutes': preferredBreakMinutes,
             'preferredStudyTimes': preferredStudyTimes,
+            'githubUsername': githubUsername,
+            'leetcodeUsername': leetcodeUsername,
+            'codeforcesUsername': codeforcesUsername,
+            'linkedinUrl': linkedinUrl,
+            'portfolioUrl': portfolioUrl,
           }),
           serializationManager: _serializationManager,
         );
@@ -4072,7 +4082,7 @@ class _StudentEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i14.StudentProfile>);
+                as _i3.Future<_i14.StudentProfile?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -4139,6 +4149,49 @@ class _StudentEndpoint {
                   _localCallContext.arguments,
                 )
                 as _i3.Future<List<_i14.StudentProfile>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _i3.Future<_i14.StudentProfile?> updateProfileLinks(
+    _i1.TestSessionBuilder sessionBuilder,
+    int studentId, {
+    String? githubUsername,
+    String? leetcodeUsername,
+    String? codeforcesUsername,
+    String? linkedinUrl,
+    String? portfolioUrl,
+  }) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'student',
+            method: 'updateProfileLinks',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'student',
+          methodName: 'updateProfileLinks',
+          parameters: _i1.testObjectToJson({
+            'studentId': studentId,
+            'githubUsername': githubUsername,
+            'leetcodeUsername': leetcodeUsername,
+            'codeforcesUsername': codeforcesUsername,
+            'linkedinUrl': linkedinUrl,
+            'portfolioUrl': portfolioUrl,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<_i14.StudentProfile?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

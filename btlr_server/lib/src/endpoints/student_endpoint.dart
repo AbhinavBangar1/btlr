@@ -69,52 +69,52 @@ class StudentEndpoint extends Endpoint {
     );
   }
 
-  /// Update student profile
-  Future<StudentProfile> updateProfile(
-    Session session,
-    int id,
-    String? name,
-    String? timezone,
-    String? wakeTime,
-    String? sleepTime,
-    int? preferredStudyBlockMinutes,
-    int? preferredBreakMinutes,
-    String? preferredStudyTimes,
-  ) async {
-    final profile = await StudentProfile.db.findById(session, id);
-    if (profile == null) {
-      throw Exception('Profile not found');
-    }
-
-    // Validate time format if provided
-    if (wakeTime != null && !_isValidTime(wakeTime)) {
-      throw Exception('Invalid wake time format. Use HH:mm');
-    }
-    if (sleepTime != null && !_isValidTime(sleepTime)) {
-      throw Exception('Invalid sleep time format. Use HH:mm');
-    }
+ /// Update student profile
+Future<StudentProfile?> updateProfile(
+  Session session,
+  int studentId,
+  String? name,
+  String? timezone,
+  String? wakeTime,
+  String? sleepTime,
+  int? preferredStudyBlockMinutes,
+  int? preferredBreakMinutes,
+  String? preferredStudyTimes,
+  // ADD NEW PARAMETERS
+  String? githubUsername,
+  String? leetcodeUsername,
+  String? codeforcesUsername,
+  String? linkedinUrl,
+  String? portfolioUrl,
+) async {
+  try {
+    var profile = await StudentProfile.db.findById(session, studentId);
+    if (profile == null) return null;
 
     // Update fields if provided
     if (name != null) profile.name = name;
     if (timezone != null) profile.timezone = timezone;
     if (wakeTime != null) profile.wakeTime = wakeTime;
     if (sleepTime != null) profile.sleepTime = sleepTime;
-    if (preferredStudyBlockMinutes != null) {
-      profile.preferredStudyBlockMinutes = preferredStudyBlockMinutes;
-    }
-    if (preferredBreakMinutes != null) {
-      profile.preferredBreakMinutes = preferredBreakMinutes;
-    }
-    if (preferredStudyTimes != null) {
-      profile.preferredStudyTimes = preferredStudyTimes;
-    }
+    if (preferredStudyBlockMinutes != null) profile.preferredStudyBlockMinutes = preferredStudyBlockMinutes;
+    if (preferredBreakMinutes != null) profile.preferredBreakMinutes = preferredBreakMinutes;
+    if (preferredStudyTimes != null) profile.preferredStudyTimes = preferredStudyTimes;
+    
+    // UPDATE NEW FIELDS
+    if (githubUsername != null) profile.githubUsername = githubUsername;
+    if (leetcodeUsername != null) profile.leetcodeUsername = leetcodeUsername;
+    if (codeforcesUsername != null) profile.codeforcesUsername = codeforcesUsername;
+    if (linkedinUrl != null) profile.linkedinUrl = linkedinUrl;
+    if (portfolioUrl != null) profile.portfolioUrl = portfolioUrl;
 
     profile.updatedAt = DateTime.now();
 
-    final updated = await StudentProfile.db.updateRow(session, profile);
-    session.log('Updated student profile: $id');
-    return updated;
+    return await StudentProfile.db.updateRow(session, profile);
+  } catch (e) {
+    session.log('Error updating profile: $e');
+    return null;
   }
+}
 
   /// Delete student profile (soft delete by setting email to archived)
   Future<bool> deleteProfile(Session session, int id) async {
@@ -158,4 +158,32 @@ class StudentEndpoint extends Endpoint {
     final timeRegex = RegExp(r'^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$');
     return timeRegex.hasMatch(time);
   }
+
+  /// Update student profile links
+Future<StudentProfile?> updateProfileLinks(
+  Session session,
+  int studentId, {
+  String? githubUsername,
+  String? leetcodeUsername,
+  String? codeforcesUsername,
+  String? linkedinUrl,
+  String? portfolioUrl,
+}) async {
+  try {
+    var profile = await StudentProfile.db.findById(session, studentId);
+    if (profile == null) return null;
+    
+    if (githubUsername != null) profile.githubUsername = githubUsername;
+    if (leetcodeUsername != null) profile.leetcodeUsername = leetcodeUsername;
+    if (codeforcesUsername != null) profile.codeforcesUsername = codeforcesUsername;
+    if (linkedinUrl != null) profile.linkedinUrl = linkedinUrl;
+    if (portfolioUrl != null) profile.portfolioUrl = portfolioUrl;
+    
+    return await StudentProfile.db.updateRow(session, profile);
+  } catch (e) {
+    session.log('Error updating profile links: $e');
+    return null;
+  }
+}
+
 }

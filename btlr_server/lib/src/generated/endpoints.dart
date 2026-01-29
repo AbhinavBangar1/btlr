@@ -2766,8 +2766,8 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'customUrl': _i1.ParameterDescription(
               name: 'customUrl',
-              type: _i1.getType<String>(),
-              nullable: false,
+              type: _i1.getType<String?>(),
+              nullable: true,
             ),
           },
           call:
@@ -3034,8 +3034,8 @@ class Endpoints extends _i1.EndpointDispatch {
         'updateProfile': _i1.MethodConnector(
           name: 'updateProfile',
           params: {
-            'id': _i1.ParameterDescription(
-              name: 'id',
+            'studentId': _i1.ParameterDescription(
+              name: 'studentId',
               type: _i1.getType<int>(),
               nullable: false,
             ),
@@ -3074,6 +3074,31 @@ class Endpoints extends _i1.EndpointDispatch {
               type: _i1.getType<String?>(),
               nullable: true,
             ),
+            'githubUsername': _i1.ParameterDescription(
+              name: 'githubUsername',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+            'leetcodeUsername': _i1.ParameterDescription(
+              name: 'leetcodeUsername',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+            'codeforcesUsername': _i1.ParameterDescription(
+              name: 'codeforcesUsername',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+            'linkedinUrl': _i1.ParameterDescription(
+              name: 'linkedinUrl',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+            'portfolioUrl': _i1.ParameterDescription(
+              name: 'portfolioUrl',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
           },
           call:
               (
@@ -3082,7 +3107,7 @@ class Endpoints extends _i1.EndpointDispatch {
               ) async =>
                   (endpoints['student'] as _i11.StudentEndpoint).updateProfile(
                     session,
-                    params['id'],
+                    params['studentId'],
                     params['name'],
                     params['timezone'],
                     params['wakeTime'],
@@ -3090,6 +3115,11 @@ class Endpoints extends _i1.EndpointDispatch {
                     params['preferredStudyBlockMinutes'],
                     params['preferredBreakMinutes'],
                     params['preferredStudyTimes'],
+                    params['githubUsername'],
+                    params['leetcodeUsername'],
+                    params['codeforcesUsername'],
+                    params['linkedinUrl'],
+                    params['portfolioUrl'],
                   ),
         ),
         'deleteProfile': _i1.MethodConnector(
@@ -3134,6 +3164,55 @@ class Endpoints extends _i1.EndpointDispatch {
                     session,
                     limit: params['limit'],
                     offset: params['offset'],
+                  ),
+        ),
+        'updateProfileLinks': _i1.MethodConnector(
+          name: 'updateProfileLinks',
+          params: {
+            'studentId': _i1.ParameterDescription(
+              name: 'studentId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'githubUsername': _i1.ParameterDescription(
+              name: 'githubUsername',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+            'leetcodeUsername': _i1.ParameterDescription(
+              name: 'leetcodeUsername',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+            'codeforcesUsername': _i1.ParameterDescription(
+              name: 'codeforcesUsername',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+            'linkedinUrl': _i1.ParameterDescription(
+              name: 'linkedinUrl',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+            'portfolioUrl': _i1.ParameterDescription(
+              name: 'portfolioUrl',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['student'] as _i11.StudentEndpoint)
+                  .updateProfileLinks(
+                    session,
+                    params['studentId'],
+                    githubUsername: params['githubUsername'],
+                    leetcodeUsername: params['leetcodeUsername'],
+                    codeforcesUsername: params['codeforcesUsername'],
+                    linkedinUrl: params['linkedinUrl'],
+                    portfolioUrl: params['portfolioUrl'],
                   ),
         ),
       },

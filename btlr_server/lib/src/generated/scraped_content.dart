@@ -23,6 +23,7 @@ abstract class ScrapedContent
     required this.sourceUrl,
     DateTime? scrapedAt,
     bool? isRead,
+    this.metadata,
   }) : scrapedAt = scrapedAt ?? DateTime.now(),
        isRead = isRead ?? false;
 
@@ -35,6 +36,7 @@ abstract class ScrapedContent
     required String sourceUrl,
     DateTime? scrapedAt,
     bool? isRead,
+    String? metadata,
   }) = _ScrapedContentImpl;
 
   factory ScrapedContent.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -49,6 +51,7 @@ abstract class ScrapedContent
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['scrapedAt']),
       isRead: jsonSerialization['isRead'] as bool?,
+      metadata: jsonSerialization['metadata'] as String?,
     );
   }
 
@@ -73,6 +76,8 @@ abstract class ScrapedContent
 
   bool isRead;
 
+  String? metadata;
+
   @override
   _i1.Table<int?> get table => t;
 
@@ -88,6 +93,7 @@ abstract class ScrapedContent
     String? sourceUrl,
     DateTime? scrapedAt,
     bool? isRead,
+    String? metadata,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -101,6 +107,7 @@ abstract class ScrapedContent
       'sourceUrl': sourceUrl,
       'scrapedAt': scrapedAt.toJson(),
       'isRead': isRead,
+      if (metadata != null) 'metadata': metadata,
     };
   }
 
@@ -116,6 +123,7 @@ abstract class ScrapedContent
       'sourceUrl': sourceUrl,
       'scrapedAt': scrapedAt.toJson(),
       'isRead': isRead,
+      if (metadata != null) 'metadata': metadata,
     };
   }
 
@@ -161,6 +169,7 @@ class _ScrapedContentImpl extends ScrapedContent {
     required String sourceUrl,
     DateTime? scrapedAt,
     bool? isRead,
+    String? metadata,
   }) : super._(
          id: id,
          userId: userId,
@@ -170,6 +179,7 @@ class _ScrapedContentImpl extends ScrapedContent {
          sourceUrl: sourceUrl,
          scrapedAt: scrapedAt,
          isRead: isRead,
+         metadata: metadata,
        );
 
   /// Returns a shallow copy of this [ScrapedContent]
@@ -185,6 +195,7 @@ class _ScrapedContentImpl extends ScrapedContent {
     String? sourceUrl,
     DateTime? scrapedAt,
     bool? isRead,
+    Object? metadata = _Undefined,
   }) {
     return ScrapedContent(
       id: id is int? ? id : this.id,
@@ -195,6 +206,7 @@ class _ScrapedContentImpl extends ScrapedContent {
       sourceUrl: sourceUrl ?? this.sourceUrl,
       scrapedAt: scrapedAt ?? this.scrapedAt,
       isRead: isRead ?? this.isRead,
+      metadata: metadata is String? ? metadata : this.metadata,
     );
   }
 }
@@ -237,6 +249,11 @@ class ScrapedContentUpdateTable extends _i1.UpdateTable<ScrapedContentTable> {
     table.isRead,
     value,
   );
+
+  _i1.ColumnValue<String, String> metadata(String? value) => _i1.ColumnValue(
+    table.metadata,
+    value,
+  );
 }
 
 class ScrapedContentTable extends _i1.Table<int?> {
@@ -273,6 +290,10 @@ class ScrapedContentTable extends _i1.Table<int?> {
       this,
       hasDefault: true,
     );
+    metadata = _i1.ColumnString(
+      'metadata',
+      this,
+    );
   }
 
   late final ScrapedContentUpdateTable updateTable;
@@ -291,6 +312,8 @@ class ScrapedContentTable extends _i1.Table<int?> {
 
   late final _i1.ColumnBool isRead;
 
+  late final _i1.ColumnString metadata;
+
   @override
   List<_i1.Column> get columns => [
     id,
@@ -301,6 +324,7 @@ class ScrapedContentTable extends _i1.Table<int?> {
     sourceUrl,
     scrapedAt,
     isRead,
+    metadata,
   ];
 }
 

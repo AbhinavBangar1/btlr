@@ -655,7 +655,7 @@ class AdaptationService {
         session,
         where: (t) =>
             t.studentProfileId.equals(studentProfileId) &
-            t.planDate.greaterOrEquals(normalizedTomorrow),
+            (t.planDate >= normalizedTomorrow),
         orderBy: (t) => t.planDate,
       );
 

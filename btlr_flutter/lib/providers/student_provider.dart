@@ -72,41 +72,54 @@ class StudentProfileNotifier extends StateNotifier<AsyncValue<StudentProfile?>> 
     }
   }
 
-  /// Update student profile
-  Future<StudentProfile?> updateProfile({
-    String? name,
-    String? timezone,
-    String? wakeTime,
-    String? sleepTime,
-    int? preferredStudyBlockMinutes,
-    int? preferredBreakMinutes,
-    String? preferredStudyTimes,
-  }) async {
-    final currentProfile = state.value;
-    if (currentProfile == null) return null;
+/// Update student profile
+Future<StudentProfile?> updateProfile({
+  String? name,
+  String? timezone,
+  String? wakeTime,
+  String? sleepTime,
+  int? preferredStudyBlockMinutes,
+  int? preferredBreakMinutes,
+  String? preferredStudyTimes,
+  // ADD THESE NEW PARAMETERS
+  String? githubUsername,
+  String? leetcodeUsername,
+  String? codeforcesUsername,
+  String? linkedinUrl,
+  String? portfolioUrl,
+}) async {
+  final currentProfile = state.value;
+  if (currentProfile == null) return null;
 
-    state = const AsyncValue.loading();
+  state = const AsyncValue.loading();
+  
+  try {
+    final endpoint = ref.read(studentEndpointProvider);
+    final updated = await endpoint.updateProfile(
+      currentProfile.id!,
+      name,
+      timezone,
+      wakeTime,
+      sleepTime,
+      preferredStudyBlockMinutes,
+      preferredBreakMinutes,
+      preferredStudyTimes,
+      // ADD THESE NEW ARGUMENTS
+      githubUsername,
+      leetcodeUsername,
+      codeforcesUsername,
+      linkedinUrl,
+      portfolioUrl,
+    );
     
-    try {
-      final endpoint = ref.read(studentEndpointProvider);
-      final updated = await endpoint.updateProfile(
-        currentProfile.id!,
-        name,
-        timezone,
-        wakeTime,
-        sleepTime,
-        preferredStudyBlockMinutes,
-        preferredBreakMinutes,
-        preferredStudyTimes,
-      );
-      
-      state = AsyncValue.data(updated);
-      return updated;
-    } catch (e, stack) {
-      state = AsyncValue.error(e, stack);
-      return null;
-    }
+    state = AsyncValue.data(updated);
+    return updated;
+  } catch (e, stack) {
+    state = AsyncValue.error(e, stack);
+    return null;
   }
+}
+
 
   /// Reload profile
   Future<void> reload() async {

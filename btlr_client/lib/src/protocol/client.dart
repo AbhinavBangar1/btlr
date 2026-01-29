@@ -1411,7 +1411,7 @@ class EndpointScraping extends _i2.EndpointRef {
   _i3.Future<bool> addCustomScrapingUrl(
     int userId,
     String platform,
-    String customUrl,
+    String? customUrl,
   ) => caller.callServerEndpoint<bool>(
     'scraping',
     'addCustomScrapingUrl',
@@ -1534,8 +1534,8 @@ class EndpointStudent extends _i2.EndpointRef {
       );
 
   /// Update student profile
-  _i3.Future<_i14.StudentProfile> updateProfile(
-    int id,
+  _i3.Future<_i14.StudentProfile?> updateProfile(
+    int studentId,
     String? name,
     String? timezone,
     String? wakeTime,
@@ -1543,11 +1543,16 @@ class EndpointStudent extends _i2.EndpointRef {
     int? preferredStudyBlockMinutes,
     int? preferredBreakMinutes,
     String? preferredStudyTimes,
-  ) => caller.callServerEndpoint<_i14.StudentProfile>(
+    String? githubUsername,
+    String? leetcodeUsername,
+    String? codeforcesUsername,
+    String? linkedinUrl,
+    String? portfolioUrl,
+  ) => caller.callServerEndpoint<_i14.StudentProfile?>(
     'student',
     'updateProfile',
     {
-      'id': id,
+      'studentId': studentId,
       'name': name,
       'timezone': timezone,
       'wakeTime': wakeTime,
@@ -1555,6 +1560,11 @@ class EndpointStudent extends _i2.EndpointRef {
       'preferredStudyBlockMinutes': preferredStudyBlockMinutes,
       'preferredBreakMinutes': preferredBreakMinutes,
       'preferredStudyTimes': preferredStudyTimes,
+      'githubUsername': githubUsername,
+      'leetcodeUsername': leetcodeUsername,
+      'codeforcesUsername': codeforcesUsername,
+      'linkedinUrl': linkedinUrl,
+      'portfolioUrl': portfolioUrl,
     },
   );
 
@@ -1575,6 +1585,27 @@ class EndpointStudent extends _i2.EndpointRef {
     {
       'limit': limit,
       'offset': offset,
+    },
+  );
+
+  /// Update student profile links
+  _i3.Future<_i14.StudentProfile?> updateProfileLinks(
+    int studentId, {
+    String? githubUsername,
+    String? leetcodeUsername,
+    String? codeforcesUsername,
+    String? linkedinUrl,
+    String? portfolioUrl,
+  }) => caller.callServerEndpoint<_i14.StudentProfile?>(
+    'student',
+    'updateProfileLinks',
+    {
+      'studentId': studentId,
+      'githubUsername': githubUsername,
+      'leetcodeUsername': leetcodeUsername,
+      'codeforcesUsername': codeforcesUsername,
+      'linkedinUrl': linkedinUrl,
+      'portfolioUrl': portfolioUrl,
     },
   );
 }

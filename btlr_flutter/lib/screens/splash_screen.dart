@@ -247,9 +247,9 @@
 
 
 
+import 'package:btlr_flutter/screens/auth_guard_screen.dart';
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
-import 'login_screen.dart';
 
 // --- BRAND CONSTANTS ---
 const Color kPrimaryBlue = Color(0xFF274B7F);
@@ -357,7 +357,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       context,
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 1000),
-        pageBuilder: (context, animation, secondaryAnimation) => const LoginScreen(),
+        pageBuilder: (context, animation, secondaryAnimation) => const AuthGuardScreen(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           // Cross-fade the Login page in as the Splash scales away
           return FadeTransition(

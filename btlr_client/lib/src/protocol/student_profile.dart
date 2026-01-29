@@ -25,6 +25,11 @@ abstract class StudentProfile implements _i1.SerializableModel {
     this.preferredStudyTimes,
     DateTime? createdAt,
     DateTime? updatedAt,
+    this.githubUsername,
+    this.leetcodeUsername,
+    this.codeforcesUsername,
+    this.linkedinUrl,
+    this.portfolioUrl,
   }) : timezone = timezone ?? 'UTC',
        preferredStudyBlockMinutes = preferredStudyBlockMinutes ?? 50,
        preferredBreakMinutes = preferredBreakMinutes ?? 10,
@@ -43,6 +48,11 @@ abstract class StudentProfile implements _i1.SerializableModel {
     String? preferredStudyTimes,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? githubUsername,
+    String? leetcodeUsername,
+    String? codeforcesUsername,
+    String? linkedinUrl,
+    String? portfolioUrl,
   }) = _StudentProfileImpl;
 
   factory StudentProfile.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -63,6 +73,11 @@ abstract class StudentProfile implements _i1.SerializableModel {
       updatedAt: jsonSerialization['updatedAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['updatedAt']),
+      githubUsername: jsonSerialization['githubUsername'] as String?,
+      leetcodeUsername: jsonSerialization['leetcodeUsername'] as String?,
+      codeforcesUsername: jsonSerialization['codeforcesUsername'] as String?,
+      linkedinUrl: jsonSerialization['linkedinUrl'] as String?,
+      portfolioUrl: jsonSerialization['portfolioUrl'] as String?,
     );
   }
 
@@ -91,6 +106,16 @@ abstract class StudentProfile implements _i1.SerializableModel {
 
   DateTime updatedAt;
 
+  String? githubUsername;
+
+  String? leetcodeUsername;
+
+  String? codeforcesUsername;
+
+  String? linkedinUrl;
+
+  String? portfolioUrl;
+
   /// Returns a shallow copy of this [StudentProfile]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -106,6 +131,11 @@ abstract class StudentProfile implements _i1.SerializableModel {
     String? preferredStudyTimes,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? githubUsername,
+    String? leetcodeUsername,
+    String? codeforcesUsername,
+    String? linkedinUrl,
+    String? portfolioUrl,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -123,6 +153,11 @@ abstract class StudentProfile implements _i1.SerializableModel {
         'preferredStudyTimes': preferredStudyTimes,
       'createdAt': createdAt.toJson(),
       'updatedAt': updatedAt.toJson(),
+      if (githubUsername != null) 'githubUsername': githubUsername,
+      if (leetcodeUsername != null) 'leetcodeUsername': leetcodeUsername,
+      if (codeforcesUsername != null) 'codeforcesUsername': codeforcesUsername,
+      if (linkedinUrl != null) 'linkedinUrl': linkedinUrl,
+      if (portfolioUrl != null) 'portfolioUrl': portfolioUrl,
     };
   }
 
@@ -147,6 +182,11 @@ class _StudentProfileImpl extends StudentProfile {
     String? preferredStudyTimes,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? githubUsername,
+    String? leetcodeUsername,
+    String? codeforcesUsername,
+    String? linkedinUrl,
+    String? portfolioUrl,
   }) : super._(
          id: id,
          name: name,
@@ -159,6 +199,11 @@ class _StudentProfileImpl extends StudentProfile {
          preferredStudyTimes: preferredStudyTimes,
          createdAt: createdAt,
          updatedAt: updatedAt,
+         githubUsername: githubUsername,
+         leetcodeUsername: leetcodeUsername,
+         codeforcesUsername: codeforcesUsername,
+         linkedinUrl: linkedinUrl,
+         portfolioUrl: portfolioUrl,
        );
 
   /// Returns a shallow copy of this [StudentProfile]
@@ -177,6 +222,11 @@ class _StudentProfileImpl extends StudentProfile {
     Object? preferredStudyTimes = _Undefined,
     DateTime? createdAt,
     DateTime? updatedAt,
+    Object? githubUsername = _Undefined,
+    Object? leetcodeUsername = _Undefined,
+    Object? codeforcesUsername = _Undefined,
+    Object? linkedinUrl = _Undefined,
+    Object? portfolioUrl = _Undefined,
   }) {
     return StudentProfile(
       id: id is int? ? id : this.id,
@@ -194,6 +244,17 @@ class _StudentProfileImpl extends StudentProfile {
           : this.preferredStudyTimes,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      githubUsername: githubUsername is String?
+          ? githubUsername
+          : this.githubUsername,
+      leetcodeUsername: leetcodeUsername is String?
+          ? leetcodeUsername
+          : this.leetcodeUsername,
+      codeforcesUsername: codeforcesUsername is String?
+          ? codeforcesUsername
+          : this.codeforcesUsername,
+      linkedinUrl: linkedinUrl is String? ? linkedinUrl : this.linkedinUrl,
+      portfolioUrl: portfolioUrl is String? ? portfolioUrl : this.portfolioUrl,
     );
   }
 }

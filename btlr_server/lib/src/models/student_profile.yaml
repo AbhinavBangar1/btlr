@@ -1,3 +1,22 @@
+# class: StudentProfile
+# table: student_profile
+# fields:
+#   name: String
+#   email: String
+#   timezone: String, default='UTC'
+#   wakeTime: String  # Format: "HH:mm" e.g., "07:00"
+#   sleepTime: String  # Format: "HH:mm" e.g., "23:00"
+#   preferredStudyBlockMinutes: int, default=50
+#   preferredBreakMinutes: int, default=10
+#   preferredStudyTimes: String?  # JSON: ["morning", "afternoon", "evening"]
+#   createdAt: DateTime, default=now
+#   updatedAt: DateTime, default=now
+# indexes:
+#   student_profile_email_idx:
+#     fields: email
+#     unique: true
+
+
 class: StudentProfile
 table: student_profile
 fields:
@@ -11,6 +30,14 @@ fields:
   preferredStudyTimes: String?  # JSON: ["morning", "afternoon", "evening"]
   createdAt: DateTime, default=now
   updatedAt: DateTime, default=now
+  
+  # Coding Profile Links
+  githubUsername: String?
+  leetcodeUsername: String?
+  codeforcesUsername: String?
+  linkedinUrl: String?
+  portfolioUrl: String?
+  
 indexes:
   student_profile_email_idx:
     fields: email
