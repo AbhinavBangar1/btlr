@@ -549,10 +549,10 @@ class ScheduleService {
     }
 
     if (until != null) {
-      final untilStr = until.toUtc().toIso8601String()
+      final untilStr = '${until.toUtc().toIso8601String()
           .replaceAll('-', '')
           .replaceAll(':', '')
-          .split('.')[0] + 'Z';
+          .split('.')[0]}Z';
       parts.add('UNTIL=$untilStr');
     }
 

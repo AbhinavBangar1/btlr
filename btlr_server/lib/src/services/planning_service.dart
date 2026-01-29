@@ -1,3 +1,452 @@
+// // import 'package:serverpod/serverpod.dart';
+// // import '../generated/protocol.dart';
+// // import 'adaptation_service.dart';
+
+// // /// Service for generating daily and monthly plans
+// // /// This is the core algorithm that creates time blocks
+// // class PlanningService {
+// //   /// Generates a daily plan for a specific date
+// //   /// This is the core algorithm that creates time blocks
+// //   static Future<DailyPlan> generateDailyPlan(
+// //     Session session,
+// //     int studentProfileId,
+// //     DateTime date,
+// //   ) async {
+// //     // Normalize date to start of day
+// //     final normalizedDate = DateTime(date.year, date.month, date.day);
+
+// //     // Get student profile
+// //     final profile = await StudentProfile.db.findById(session,studentProfileId);
+// //     if (profile == null) {
+// //       throw Exception('Student profile not found');
+// //     }
+
+// //     // Get all active learning goals
+// //     final goals = await LearningGoal.db.find(
+// //       session,
+// //       where: (t) =>
+// //           t.studentProfileId.equals(studentProfileId) &
+// //           (t.status.equals('in_progress') | t.status.equals('not_started')),
+// //       orderBy: (t) => t.priority,
+// //     );
+
+// //     // Get academic schedule for this date
+// //     final academicEvents = await _getAcademicEventsForDate(
+// //       session,
+// //       studentProfileId,
+// //       normalizedDate,
+// //     );
+
+// //     // Get behavioral patterns from last 14 days
+// //     final patterns = await AdaptationService.analyzeRecentBehavior(
+// //       session,
+// //       studentProfileId,
+// //       days: 14,
+// //     );
+
+// // // Check if plan already exists - DELETE IT FIRST if it does
+// //     final existingPlan = await DailyPlan.db.findFirstRow(
+// //       session,
+// //       where: (t) =>
+// //           t.studentProfileId.equals(studentProfileId) &
+// //           t.planDate.equals(normalizedDate),
+// //     );
+
+// //     final planVersion = (existingPlan?.version ?? 0) + 1;
+
+// //     // Delete existing plan and its blocks if regenerating
+// //     if (existingPlan != null) {
+// //       session.log('Found existing plan ${existingPlan.id}, deleting it first');
+
+// //       // Delete time blocks first (foreign key constraint)
+// //       await TimeBlock.db.deleteWhere(
+// //         session,
+// //         where: (t) => t.dailyPlanId.equals(existingPlan.id!),
+// //       );
+
+// //       // Delete the plan
+// //       await DailyPlan.db.deleteWhere(
+// //         session,
+// //         where: (t) => t.id.equals(existingPlan.id!),
+// //       );
+
+// //       session.log('Deleted old plan and blocks');
+// //     }
+
+// //     // Create new plan
+// //     final plan = DailyPlan(
+// //       studentProfileId: studentProfileId,
+// //       planDate: normalizedDate,
+// //       version: planVersion,
+// //       reasoning: _generateReasoning(profile, patterns, goals),
+// //       generatedAt: DateTime.now(),
+// //       adaptationNotes: patterns['adaptationNotes'] as String?,
+// //     );
+
+// //     final savedPlan = await DailyPlan.db.insertRow(session, plan);
+// //     session.log('Created new plan ${savedPlan.id} version $planVersion');
+
+// //     // Generate time blocks
+// //     final timeBlocks = await _generateTimeBlocks(
+// //       session,
+// //       savedPlan.id!,
+// //       profile,
+// //       goals,
+// //       academicEvents,
+// //       patterns,
+// //       normalizedDate,
+// //     );
+
+// //     // Calculate total planned minutes
+// //     final totalMinutes = timeBlocks.fold<int>(
+// //       0,
+// //       (sum, block) => sum + block.durationMinutes,
+// //     );
+
+// //     savedPlan.totalPlannedMinutes = totalMinutes;
+// //     await DailyPlan.db.updateRow(session,savedPlan);
+
+// //     session.log('Generated daily plan for $normalizedDate with ${timeBlocks.length} blocks');
+
+// //     return savedPlan;
+// //   }
+
+// //   /// Get academic events for a specific date (handles recurring events)
+// //   static Future<List<AcademicSchedule>> _getAcademicEventsForDate(
+// //     Session session,
+// //     int studentProfileId,
+// //     DateTime date,
+// //   ) async {
+// //     final startOfDay = DateTime(date.year, date.month, date.day);
+// //     final endOfDay = startOfDay.add(const Duration(days: 1));
+
+// //     // Get non-recurring events
+// //     final nonRecurring = await AcademicSchedule.db.find(
+// //       session,
+// //       where: (t) => t.studentProfileId.equals(studentProfileId) &
+// //           t.isRecurring.equals(false) &
+// //           t.startTime.between(startOfDay, endOfDay) &
+// //           t.deletedAt.equals(null),
+// //     );
+
+// //     // Get recurring events and check if they occur on this date
+// //     final recurring = await AcademicSchedule.db.find(
+// //       session,
+// //       where: (t) =>
+// //           t.studentProfileId.equals(studentProfileId) &
+// //           t.isRecurring.equals(true) &
+// //           t.deletedAt.equals(null),
+// //     );
+
+// //     final allEvents = <AcademicSchedule>[...nonRecurring];
+
+// //     // Process recurring events
+// //     for (final event in recurring) {
+// //       if (event.rrule != null && _eventOccursOnDate(event, date)) {
+// //         // Create a copy with adjusted dates for this occurrence
+// //         final adjustedEvent = AcademicSchedule(
+// //           id: event.id,
+// //           studentProfileId: event.studentProfileId,
+// //           title: event.title,
+// //           type: event.type,
+// //           location: event.location,
+// //           rrule: event.rrule,
+// //           startTime: DateTime(
+// //             date.year,
+// //             date.month,
+// //             date.day,
+// //             event.startTime.hour,
+// //             event.startTime.minute,
+// //           ),
+// //           endTime: DateTime(
+// //             date.year,
+// //             date.month,
+// //             date.day,
+// //             event.endTime.hour,
+// //             event.endTime.minute,
+// //           ),
+// //           isRecurring: event.isRecurring,
+// //           createdAt: event.createdAt,
+// //         );
+// //         allEvents.add(adjustedEvent);
+// //       }
+// //     }
+
+// //     return allEvents;
+// //   }
+
+// //   /// Simple RRULE parser - checks if event occurs on given date
+// //   static bool _eventOccursOnDate(AcademicSchedule event, DateTime date) {
+// //     if (event.rrule == null) return false;
+
+// //     final rrule = event.rrule!;
+    
+// //     // Parse RRULE components
+// //     if (rrule.contains('FREQ=WEEKLY')) {
+// //       // Check if BYDAY matches
+// //       if (rrule.contains('BYDAY=')) {
+// //         final dayMap = {
+// //           'MO': DateTime.monday,
+// //           'TU': DateTime.tuesday,
+// //           'WE': DateTime.wednesday,
+// //           'TH': DateTime.thursday,
+// //           'FR': DateTime.friday,
+// //           'SA': DateTime.saturday,
+// //           'SU': DateTime.sunday,
+// //         };
+
+// //         for (final entry in dayMap.entries) {
+// //           if (rrule.contains(entry.key) && date.weekday == entry.value) {
+// //             return true;
+// //           }
+// //         }
+// //       }
+// //     } else if (rrule.contains('FREQ=DAILY')) {
+// //       return true;
+// //     }
+
+// //     return false;
+// //   }
+
+// //   /// Generate time blocks based on available time slots
+// //   static Future<List<TimeBlock>> _generateTimeBlocks(
+// //     Session session,
+// //     int dailyPlanId,
+// //     StudentProfile profile,
+// //     List<LearningGoal> goals,
+// //     List<AcademicSchedule> academicEvents,
+// //     Map<String, dynamic> patterns,
+// //     DateTime date,
+// //   ) async {
+// //     final blocks = <TimeBlock>[];
+
+// //     // Parse wake and sleep times
+// //     final wakeTime = _parseTime(profile.wakeTime);
+// //     final sleepTime = _parseTime(profile.sleepTime);
+
+// //     var currentTime = DateTime(
+// //       date.year,
+// //       date.month,
+// //       date.day,
+// //       wakeTime.hour,
+// //       wakeTime.minute,
+// //     );
+
+// //     final endTime = DateTime(
+// //       date.year,
+// //       date.month,
+// //       date.day,
+// //       sleepTime.hour,
+// //       sleepTime.minute,
+// //     );
+
+// //     // First, add all academic events as fixed blocks
+// //     for (final event in academicEvents) {
+// //       final block = TimeBlock(
+// //         dailyPlanId: dailyPlanId,
+// //         academicScheduleId: event.id,
+// //         title: event.title,
+// //         description: event.location,
+// //         blockType: 'class',
+// //         startTime: event.startTime,
+// //         endTime: event.endTime,
+// //         durationMinutes: event.endTime.difference(event.startTime).inMinutes,
+// //       );
+// //       blocks.add(block);
+// //     }
+
+// //     // Sort academic blocks by start time
+// //     blocks.sort((a, b) => a.startTime.compareTo(b.startTime));
+
+// //     // Find gaps between fixed blocks and fill with study sessions
+// //     final studyBlocks = <TimeBlock>[];
+    
+// //     for (int i = 0; i <= blocks.length; i++) {
+// //       final gapStart = i == 0 ? currentTime : blocks[i - 1].endTime;
+// //       final gapEnd = i < blocks.length ? blocks[i].startTime : endTime;
+      
+// //       final gapMinutes = gapEnd.difference(gapStart).inMinutes;
+
+// //       // If gap is large enough, add study blocks
+// //       if (gapMinutes >= profile.preferredStudyBlockMinutes + profile.preferredBreakMinutes) {
+// //         studyBlocks.addAll(
+// //           _fillGapWithStudyBlocks(
+// //             dailyPlanId,
+// //             gapStart,
+// //             gapEnd,
+// //             profile,
+// //             goals,
+// //             patterns,
+// //           ),
+// //         );
+// //       }
+// //     }
+
+// //     // Insert all blocks
+// //     blocks.addAll(studyBlocks);
+    
+// //     for (final block in blocks) {
+// //       await TimeBlock.db.insertRow(session,block);
+// //     }
+
+// //     return blocks;
+// //   }
+
+// //   /// Fill a time gap with study blocks and breaks
+// //   static List<TimeBlock> _fillGapWithStudyBlocks(
+// //     int dailyPlanId,
+// //     DateTime gapStart,
+// //     DateTime gapEnd,
+// //     StudentProfile profile,
+// //     List<LearningGoal> goals,
+// //     Map<String, dynamic> patterns,
+// //   ) {
+// //     final blocks = <TimeBlock>[];
+// //     var currentTime = gapStart;
+
+// //     // Use adapted block length if available
+// //     final blockDuration = (patterns['optimalBlockMinutes'] as int?) ?? 
+// //                          profile.preferredStudyBlockMinutes;
+// //     final breakDuration = profile.preferredBreakMinutes;
+
+// //     int goalIndex = 0;
+
+// //     while (currentTime.add(Duration(minutes: blockDuration)).isBefore(gapEnd) ||
+// //            currentTime.add(Duration(minutes: blockDuration)) == gapEnd) {
+      
+// //       // Check if we have enough time for a study block
+// //       final remainingMinutes = gapEnd.difference(currentTime).inMinutes;
+// //       if (remainingMinutes < blockDuration) break;
+
+// //       if (goals.isEmpty) break;
+      
+// //       // Rotate through goals, prioritizing high priority
+// //       final highPriorityGoals = goals.where((g) => g.priority == 'high').toList();
+// //       final mediumPriorityGoals = goals.where((g) => g.priority == 'medium').toList();
+// //       final lowPriorityGoals = goals.where((g) => g.priority == 'low').toList();
+      
+// //       final allGoalsSorted = [...highPriorityGoals, ...mediumPriorityGoals, ...lowPriorityGoals];
+      
+// //       if (allGoalsSorted.isEmpty) break;
+      
+// //       final goal = allGoalsSorted[goalIndex % allGoalsSorted.length];
+      
+// //       // Create study block
+// //       final studyBlock = TimeBlock(
+// //         dailyPlanId: dailyPlanId,
+// //         learningGoalId: goal.id,
+// //         title: goal.title,
+// //         description: 'Focused study session',
+// //         blockType: 'study',
+// //         startTime: currentTime,
+// //         endTime: currentTime.add(Duration(minutes: blockDuration)),
+// //         durationMinutes: blockDuration,
+// //       );
+// //       blocks.add(studyBlock);
+
+// //       currentTime = currentTime.add(Duration(minutes: blockDuration));
+
+// //       // Add break if there's room and not at the end
+// //       final remainingAfterBreak = gapEnd.difference(currentTime.add(Duration(minutes: breakDuration))).inMinutes;
+// //       if (remainingAfterBreak >= blockDuration) {
+// //         final breakBlock = TimeBlock(
+// //           dailyPlanId: dailyPlanId,
+// //           title: 'Break',
+// //           description: 'Take a short break',
+// //           blockType: 'break',
+// //           startTime: currentTime,
+// //           endTime: currentTime.add(Duration(minutes: breakDuration)),
+// //           durationMinutes: breakDuration,
+// //         );
+// //         blocks.add(breakBlock);
+// //         currentTime = currentTime.add(Duration(minutes: breakDuration));
+// //       }
+
+// //       goalIndex++;
+// //     }
+
+// //     return blocks;
+// //   }
+
+// //   /// Parse time string "HH:mm" to DateTime
+// //   static DateTime _parseTime(String timeStr) {
+// //     try {
+// //       final parts = timeStr.split(':');
+// //       return DateTime(0, 1, 1, int.parse(parts[0]), int.parse(parts[1]));
+// //     } catch (e) {
+// //       // Default to 7 AM if parsing fails
+// //       return DateTime(0, 1, 1, 7, 0);
+// //     }
+// //   }
+
+// //   /// Generate reasoning for why this plan was created
+// //   static String _generateReasoning(
+// //     StudentProfile profile,
+// //     Map<String, dynamic> patterns,
+// //     List<LearningGoal> goals,
+// //   ) {
+// //     final reasoning = StringBuffer();
+// //     reasoning.writeln('Plan generated based on:');
+// //     reasoning.writeln('- ${goals.length} active learning goals');
+// //     reasoning.writeln('- Preferred ${profile.preferredStudyBlockMinutes}min study blocks');
+    
+// //     if (patterns.containsKey('completionRate')) {
+// //       final rate = ((patterns['completionRate'] as double) * 100).toStringAsFixed(0);
+// //       reasoning.writeln('- Recent completion rate: $rate%');
+// //     }
+    
+// //     if (patterns.containsKey('optimalBlockMinutes')) {
+// //       reasoning.writeln('- Adapted to ${patterns['optimalBlockMinutes']}min blocks based on performance');
+// //     }
+
+// //     return reasoning.toString();
+// //   }
+
+// //   /// Generate plans for multiple days
+// //   static Future<List<DailyPlan>> generateMultiplePlans(
+// //     Session session,
+// //     int studentProfileId,
+// //     int daysAhead,
+// //   ) async {
+// //     final plans = <DailyPlan>[];
+// //     final today = DateTime.now();
+
+// //     for (int i = 0; i < daysAhead; i++) {
+// //       final date = today.add(Duration(days: i));
+// //       try {
+// //         final plan = await generateDailyPlan(session, studentProfileId, date);
+// //         plans.add(plan);
+// //       } catch (e) {
+// //         session.log('Failed to generate plan for day $i: $e');
+// //       }
+// //     }
+
+// //     return plans;
+// //   }
+// // }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // import 'package:serverpod/serverpod.dart';
 // import '../generated/protocol.dart';
 // import 'adaptation_service.dart';
@@ -5,6 +454,12 @@
 // /// Service for generating daily and monthly plans
 // /// This is the core algorithm that creates time blocks
 // class PlanningService {
+//   /// Maximum study time per day (in minutes)
+//   static const int maxDailyStudyMinutes = 480; // 8 hours
+  
+//   /// Maximum study blocks per time gap
+//   static const int maxBlocksPerGap = 6;
+
 //   /// Generates a daily plan for a specific date
 //   /// This is the core algorithm that creates time blocks
 //   static Future<DailyPlan> generateDailyPlan(
@@ -16,7 +471,7 @@
 //     final normalizedDate = DateTime(date.year, date.month, date.day);
 
 //     // Get student profile
-//     final profile = await StudentProfile.db.findById(session,studentProfileId);
+//     final profile = await StudentProfile.db.findById(session, studentProfileId);
 //     if (profile == null) {
 //       throw Exception('Student profile not found');
 //     }
@@ -44,7 +499,7 @@
 //       days: 14,
 //     );
 
-// // Check if plan already exists - DELETE IT FIRST if it does
+//     // Check if plan already exists - DELETE IT FIRST if it does
 //     final existingPlan = await DailyPlan.db.findFirstRow(
 //       session,
 //       where: (t) =>
@@ -86,7 +541,7 @@
 //     final savedPlan = await DailyPlan.db.insertRow(session, plan);
 //     session.log('Created new plan ${savedPlan.id} version $planVersion');
 
-//     // Generate time blocks
+//     // Generate time blocks with daily limit tracking
 //     final timeBlocks = await _generateTimeBlocks(
 //       session,
 //       savedPlan.id!,
@@ -104,9 +559,9 @@
 //     );
 
 //     savedPlan.totalPlannedMinutes = totalMinutes;
-//     await DailyPlan.db.updateRow(session,savedPlan);
+//     await DailyPlan.db.updateRow(session, savedPlan);
 
-//     session.log('Generated daily plan for $normalizedDate with ${timeBlocks.length} blocks');
+//     session.log('Generated daily plan for $normalizedDate with ${timeBlocks.length} blocks (${totalMinutes}min total)');
 
 //     return savedPlan;
 //   }
@@ -258,10 +713,19 @@
 //     // Sort academic blocks by start time
 //     blocks.sort((a, b) => a.startTime.compareTo(b.startTime));
 
+//     // Track total study minutes to enforce daily limit
+//     int totalStudyMinutes = 0;
+
 //     // Find gaps between fixed blocks and fill with study sessions
 //     final studyBlocks = <TimeBlock>[];
     
 //     for (int i = 0; i <= blocks.length; i++) {
+//       // Check if we've hit daily study limit
+//       if (totalStudyMinutes >= maxDailyStudyMinutes) {
+//         session.log('Reached maximum daily study time ($maxDailyStudyMinutes min)');
+//         break;
+//       }
+
 //       final gapStart = i == 0 ? currentTime : blocks[i - 1].endTime;
 //       final gapEnd = i < blocks.length ? blocks[i].startTime : endTime;
       
@@ -269,16 +733,25 @@
 
 //       // If gap is large enough, add study blocks
 //       if (gapMinutes >= profile.preferredStudyBlockMinutes + profile.preferredBreakMinutes) {
-//         studyBlocks.addAll(
-//           _fillGapWithStudyBlocks(
-//             dailyPlanId,
-//             gapStart,
-//             gapEnd,
-//             profile,
-//             goals,
-//             patterns,
-//           ),
+//         final remainingStudyMinutes = maxDailyStudyMinutes - totalStudyMinutes;
+        
+//         final newBlocks = _fillGapWithStudyBlocks(
+//           dailyPlanId,
+//           gapStart,
+//           gapEnd,
+//           profile,
+//           goals,
+//           patterns,
+//           maxRemainingMinutes: remainingStudyMinutes,
 //         );
+        
+//         // Calculate study time from new blocks
+//         final studyTime = newBlocks
+//             .where((b) => b.blockType == 'study')
+//             .fold(0, (sum, b) => sum + b.durationMinutes);
+        
+//         totalStudyMinutes += studyTime;
+//         studyBlocks.addAll(newBlocks);
 //       }
 //     }
 
@@ -286,8 +759,10 @@
 //     blocks.addAll(studyBlocks);
     
 //     for (final block in blocks) {
-//       await TimeBlock.db.insertRow(session,block);
+//       await TimeBlock.db.insertRow(session, block);
 //     }
+
+//     session.log('Total study time scheduled: $totalStudyMinutes minutes');
 
 //     return blocks;
 //   }
@@ -299,8 +774,9 @@
 //     DateTime gapEnd,
 //     StudentProfile profile,
 //     List<LearningGoal> goals,
-//     Map<String, dynamic> patterns,
-//   ) {
+//     Map<String, dynamic> patterns, {
+//     int? maxRemainingMinutes,
+//   }) {
 //     final blocks = <TimeBlock>[];
 //     var currentTime = gapStart;
 
@@ -310,13 +786,23 @@
 //     final breakDuration = profile.preferredBreakMinutes;
 
 //     int goalIndex = 0;
+//     int blockCount = 0;
 
-//     while (currentTime.add(Duration(minutes: blockDuration)).isBefore(gapEnd) ||
-//            currentTime.add(Duration(minutes: blockDuration)) == gapEnd) {
+//     // Calculate effective max remaining time
+//     final effectiveMaxMinutes = maxRemainingMinutes ?? maxDailyStudyMinutes;
+
+//     while (currentTime.isBefore(gapEnd) && blockCount < maxBlocksPerGap) {
+//       final remainingMinutes = gapEnd.difference(currentTime).inMinutes;
       
 //       // Check if we have enough time for a study block
-//       final remainingMinutes = gapEnd.difference(currentTime).inMinutes;
 //       if (remainingMinutes < blockDuration) break;
+      
+//       // Check if we've hit the daily study limit
+//       final totalStudyInBlocks = blocks
+//           .where((b) => b.blockType == 'study')
+//           .fold(0, (sum, b) => sum + b.durationMinutes);
+      
+//       if (totalStudyInBlocks >= effectiveMaxMinutes) break;
 
 //       if (goals.isEmpty) break;
       
@@ -343,6 +829,7 @@
 //         durationMinutes: blockDuration,
 //       );
 //       blocks.add(studyBlock);
+//       blockCount++;
 
 //       currentTime = currentTime.add(Duration(minutes: blockDuration));
 
@@ -389,6 +876,7 @@
 //     reasoning.writeln('Plan generated based on:');
 //     reasoning.writeln('- ${goals.length} active learning goals');
 //     reasoning.writeln('- Preferred ${profile.preferredStudyBlockMinutes}min study blocks');
+//     reasoning.writeln('- Daily study limit: $maxDailyStudyMinutes minutes (${(maxDailyStudyMinutes / 60).toStringAsFixed(1)} hours)');
     
 //     if (patterns.containsKey('completionRate')) {
 //       final rate = ((patterns['completionRate'] as double) * 100).toStringAsFixed(0);
@@ -431,30 +919,12 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import 'package:serverpod/serverpod.dart';
 import '../generated/protocol.dart';
 import 'adaptation_service.dart';
-import 'duration_estimation_service.dart';
-import 'completion_tracking_service.dart';
 
-/// Service for generating daily and monthly plans
-/// This is the core algorithm that creates time blocks
+/// Service for generating daily and weekly plans
+/// Updated to support both weekly and daily views
 class PlanningService {
   /// Maximum study time per day (in minutes)
   static const int maxDailyStudyMinutes = 480; // 8 hours
@@ -463,12 +933,14 @@ class PlanningService {
   static const int maxBlocksPerGap = 6;
 
   /// Generates a daily plan for a specific date
-  /// This is the core algorithm that creates time blocks
+  /// This creates tasks ONLY for the specified day
   static Future<DailyPlan> generateDailyPlan(
     Session session,
     int studentProfileId,
-    DateTime date,
-  ) async {
+    DateTime date, {
+    int? customStudyBlockMinutes,
+    int? customBreakMinutes,
+  }) async {
     // Normalize date to start of day
     final normalizedDate = DateTime(date.year, date.month, date.day);
 
@@ -478,7 +950,11 @@ class PlanningService {
       throw Exception('Student profile not found');
     }
 
-    // Get all active learning goals
+    // Use custom durations if provided, otherwise use profile preferences
+    final studyBlockMinutes = customStudyBlockMinutes ?? profile.preferredStudyBlockMinutes;
+    final breakMinutes = customBreakMinutes ?? profile.preferredBreakMinutes;
+
+    // Get all active learning goals with deadlines
     final goals = await LearningGoal.db.find(
       session,
       where: (t) =>
@@ -486,6 +962,9 @@ class PlanningService {
           (t.status.equals('in_progress') | t.status.equals('not_started')),
       orderBy: (t) => t.priority,
     );
+
+    // Filter goals relevant for this specific day
+    final relevantGoals = _filterGoalsForDate(goals, normalizedDate);
 
     // Get academic schedule for this date
     final academicEvents = await _getAcademicEventsForDate(
@@ -535,23 +1014,25 @@ class PlanningService {
       studentProfileId: studentProfileId,
       planDate: normalizedDate,
       version: planVersion,
-      reasoning: _generateReasoning(profile, patterns, goals),
+      reasoning: _generateReasoning(profile, patterns, relevantGoals, studyBlockMinutes, breakMinutes),
       generatedAt: DateTime.now(),
       adaptationNotes: patterns['adaptationNotes'] as String?,
     );
 
     final savedPlan = await DailyPlan.db.insertRow(session, plan);
-    session.log('Created new plan ${savedPlan.id} version $planVersion');
+    session.log('Created new plan ${savedPlan.id} version $planVersion for date $normalizedDate');
 
-    // Generate time blocks with daily limit tracking
+    // Generate time blocks with custom durations
     final timeBlocks = await _generateTimeBlocks(
       session,
       savedPlan.id!,
       profile,
-      goals,
+      relevantGoals,
       academicEvents,
       patterns,
       normalizedDate,
+      studyBlockMinutes: studyBlockMinutes,
+      breakMinutes: breakMinutes,
     );
 
     // Calculate total planned minutes
@@ -566,6 +1047,138 @@ class PlanningService {
     session.log('Generated daily plan for $normalizedDate with ${timeBlocks.length} blocks (${totalMinutes}min total)');
 
     return savedPlan;
+  }
+
+  /// Filter goals that are relevant for a specific date based on deadline
+  static List<LearningGoal> _filterGoalsForDate(List<LearningGoal> goals, DateTime date) {
+    return goals.where((goal) {
+      // Include goals without deadlines
+      if (goal.deadline == null) return true;
+      
+      // Include goals where deadline is today or in the future
+      final deadline = DateTime(goal.deadline!.year, goal.deadline!.month, goal.deadline!.day);
+      final today = DateTime(date.year, date.month, date.day);
+      
+      return deadline.isAfter(today) || deadline.isAtSameMomentAs(today);
+    }).toList();
+  }
+
+  /// Generates weekly plan (Monday to Sunday)
+  /// Returns a map of date -> DailyPlan
+  static Future<Map<DateTime, DailyPlan>> generateWeeklyPlan(
+    Session session,
+    int studentProfileId,
+    DateTime weekStartDate, {
+    int? customStudyBlockMinutes,
+    int? customBreakMinutes,
+  }) async {
+    final weeklyPlans = <DateTime, DailyPlan>{};
+    
+    // Normalize to Monday of the week
+    DateTime monday = weekStartDate;
+    while (monday.weekday != DateTime.monday) {
+      monday = monday.subtract(const Duration(days: 1));
+    }
+
+    session.log('Generating weekly plan starting from Monday: $monday');
+
+    // Generate plans for Monday through Sunday
+    for (int i = 0; i < 7; i++) {
+      final currentDate = monday.add(Duration(days: i));
+      
+      try {
+        final dailyPlan = await generateDailyPlan(
+          session,
+          studentProfileId,
+          currentDate,
+          customStudyBlockMinutes: customStudyBlockMinutes,
+          customBreakMinutes: customBreakMinutes,
+        );
+        
+        weeklyPlans[currentDate] = dailyPlan;
+        session.log('Generated plan for ${_getDayName(currentDate.weekday)}, ${currentDate.toString().split(' ')[0]}');
+      } catch (e) {
+        session.log('Failed to generate plan for ${currentDate}: $e', level: LogLevel.error);
+      }
+    }
+
+    return weeklyPlans;
+  }
+
+  /// Get day name from weekday number
+  static String _getDayName(int weekday) {
+    switch (weekday) {
+      case DateTime.monday: return 'Monday';
+      case DateTime.tuesday: return 'Tuesday';
+      case DateTime.wednesday: return 'Wednesday';
+      case DateTime.thursday: return 'Thursday';
+      case DateTime.friday: return 'Friday';
+      case DateTime.saturday: return 'Saturday';
+      case DateTime.sunday: return 'Sunday';
+      default: return 'Unknown';
+    }
+  }
+
+  /// Add a custom time block at a specific time slot
+  static Future<TimeBlock> addCustomTimeBlock(
+    Session session,
+    int dailyPlanId,
+    DateTime startTime,
+    int durationMinutes,
+    String title,
+    String description,
+    String blockType, {
+    int? learningGoalId,
+  }) async {
+    // Validate the time block doesn't overlap with existing blocks
+    final existingBlocks = await TimeBlock.db.find(
+      session,
+      where: (t) => t.dailyPlanId.equals(dailyPlanId),
+      orderBy: (t) => t.startTime,
+    );
+
+    final endTime = startTime.add(Duration(minutes: durationMinutes));
+
+    // Check for overlaps
+    for (final block in existingBlocks) {
+      if (_isOverlapping(startTime, endTime, block.startTime, block.endTime)) {
+        throw Exception('Time slot conflicts with existing block: ${block.title}');
+      }
+    }
+
+    // Create the custom block
+    final customBlock = TimeBlock(
+      dailyPlanId: dailyPlanId,
+      learningGoalId: learningGoalId,
+      title: title,
+      description: description,
+      blockType: blockType,
+      startTime: startTime,
+      endTime: endTime,
+      durationMinutes: durationMinutes,
+    );
+
+    final savedBlock = await TimeBlock.db.insertRow(session, customBlock);
+    session.log('Added custom time block: $title at $startTime');
+
+    // Update total planned minutes in daily plan
+    final plan = await DailyPlan.db.findById(session, dailyPlanId);
+    if (plan != null) {
+      plan.totalPlannedMinutes = (plan.totalPlannedMinutes ?? 0) + durationMinutes;
+      await DailyPlan.db.updateRow(session, plan);
+    }
+
+    return savedBlock;
+  }
+
+  /// Check if two time ranges overlap
+  static bool _isOverlapping(
+    DateTime start1,
+    DateTime end1,
+    DateTime start2,
+    DateTime end2,
+  ) {
+    return start1.isBefore(end2) && end1.isAfter(start2);
   }
 
   /// Get academic events for a specific date (handles recurring events)
@@ -666,6 +1279,7 @@ class PlanningService {
   }
 
   /// Generate time blocks based on available time slots
+  /// NOW PROPERLY USES studyBlockMinutes and breakMinutes parameters
   static Future<List<TimeBlock>> _generateTimeBlocks(
     Session session,
     int dailyPlanId,
@@ -673,8 +1287,10 @@ class PlanningService {
     List<LearningGoal> goals,
     List<AcademicSchedule> academicEvents,
     Map<String, dynamic> patterns,
-    DateTime date,
-  ) async {
+    DateTime date, {
+    required int studyBlockMinutes,
+    required int breakMinutes,
+  }) async {
     final blocks = <TimeBlock>[];
 
     // Parse wake and sleep times
@@ -734,16 +1350,16 @@ class PlanningService {
       final gapMinutes = gapEnd.difference(gapStart).inMinutes;
 
       // If gap is large enough, add study blocks
-      if (gapMinutes >= profile.preferredStudyBlockMinutes + profile.preferredBreakMinutes) {
+      if (gapMinutes >= studyBlockMinutes + breakMinutes) {
         final remainingStudyMinutes = maxDailyStudyMinutes - totalStudyMinutes;
         
         final newBlocks = _fillGapWithStudyBlocks(
           dailyPlanId,
           gapStart,
           gapEnd,
-          profile,
           goals,
-          patterns,
+          studyBlockMinutes: studyBlockMinutes,
+          breakMinutes: breakMinutes,
           maxRemainingMinutes: remainingStudyMinutes,
         );
         
@@ -764,28 +1380,24 @@ class PlanningService {
       await TimeBlock.db.insertRow(session, block);
     }
 
-    session.log('Total study time scheduled: $totalStudyMinutes minutes');
+    session.log('Total study time scheduled: $totalStudyMinutes minutes (using ${studyBlockMinutes}min blocks, ${breakMinutes}min breaks)');
 
     return blocks;
   }
 
   /// Fill a time gap with study blocks and breaks
+  /// NOW USES the provided studyBlockMinutes and breakMinutes parameters
   static List<TimeBlock> _fillGapWithStudyBlocks(
     int dailyPlanId,
     DateTime gapStart,
     DateTime gapEnd,
-    StudentProfile profile,
-    List<LearningGoal> goals,
-    Map<String, dynamic> patterns, {
+    List<LearningGoal> goals, {
+    required int studyBlockMinutes,
+    required int breakMinutes,
     int? maxRemainingMinutes,
   }) {
     final blocks = <TimeBlock>[];
     var currentTime = gapStart;
-
-    // Use adapted block length if available
-    final blockDuration = (patterns['optimalBlockMinutes'] as int?) ?? 
-                         profile.preferredStudyBlockMinutes;
-    final breakDuration = profile.preferredBreakMinutes;
 
     int goalIndex = 0;
     int blockCount = 0;
@@ -797,7 +1409,7 @@ class PlanningService {
       final remainingMinutes = gapEnd.difference(currentTime).inMinutes;
       
       // Check if we have enough time for a study block
-      if (remainingMinutes < blockDuration) break;
+      if (remainingMinutes < studyBlockMinutes) break;
       
       // Check if we've hit the daily study limit
       final totalStudyInBlocks = blocks
@@ -808,53 +1420,89 @@ class PlanningService {
 
       if (goals.isEmpty) break;
       
-      // Rotate through goals, prioritizing high priority
-      final highPriorityGoals = goals.where((g) => g.priority == 'high').toList();
-      final mediumPriorityGoals = goals.where((g) => g.priority == 'medium').toList();
-      final lowPriorityGoals = goals.where((g) => g.priority == 'low').toList();
+      // Prioritize goals by deadline and hours needed
+      final sortedGoals = _prioritizeGoalsByDeadlineAndHours(goals);
       
-      final allGoalsSorted = [...highPriorityGoals, ...mediumPriorityGoals, ...lowPriorityGoals];
+      if (sortedGoals.isEmpty) break;
       
-      if (allGoalsSorted.isEmpty) break;
+      final goal = sortedGoals[goalIndex % sortedGoals.length];
       
-      final goal = allGoalsSorted[goalIndex % allGoalsSorted.length];
+      // Check if goal still needs time allocation
+      final remainingHours = goal.hoursNeeded ?? 0;
+      if (remainingHours <= 0) {
+        goalIndex++;
+        continue;
+      }
       
       // Create study block
       final studyBlock = TimeBlock(
         dailyPlanId: dailyPlanId,
         learningGoalId: goal.id,
         title: goal.title,
-        description: 'Focused study session',
+        description: 'Focused study session - ${goal.description ?? ""}',
         blockType: 'study',
         startTime: currentTime,
-        endTime: currentTime.add(Duration(minutes: blockDuration)),
-        durationMinutes: blockDuration,
+        endTime: currentTime.add(Duration(minutes: studyBlockMinutes)),
+        durationMinutes: studyBlockMinutes,
       );
       blocks.add(studyBlock);
       blockCount++;
 
-      currentTime = currentTime.add(Duration(minutes: blockDuration));
+      currentTime = currentTime.add(Duration(minutes: studyBlockMinutes));
 
       // Add break if there's room and not at the end
-      final remainingAfterBreak = gapEnd.difference(currentTime.add(Duration(minutes: breakDuration))).inMinutes;
-      if (remainingAfterBreak >= blockDuration) {
+      final remainingAfterBreak = gapEnd.difference(currentTime.add(Duration(minutes: breakMinutes))).inMinutes;
+      if (remainingAfterBreak >= studyBlockMinutes) {
         final breakBlock = TimeBlock(
           dailyPlanId: dailyPlanId,
           title: 'Break',
           description: 'Take a short break',
           blockType: 'break',
           startTime: currentTime,
-          endTime: currentTime.add(Duration(minutes: breakDuration)),
-          durationMinutes: breakDuration,
+          endTime: currentTime.add(Duration(minutes: breakMinutes)),
+          durationMinutes: breakMinutes,
         );
         blocks.add(breakBlock);
-        currentTime = currentTime.add(Duration(minutes: breakDuration));
+        currentTime = currentTime.add(Duration(minutes: breakMinutes));
       }
 
       goalIndex++;
     }
 
     return blocks;
+  }
+
+  /// Prioritize goals by deadline (urgent first) and hours needed
+  static List<LearningGoal> _prioritizeGoalsByDeadlineAndHours(List<LearningGoal> goals) {
+    final now = DateTime.now();
+    
+    // Sort by: 1) deadline urgency, 2) priority, 3) hours needed
+    final sortedGoals = List<LearningGoal>.from(goals);
+    sortedGoals.sort((a, b) {
+      // First, sort by deadline (closest deadline first)
+      if (a.deadline != null && b.deadline != null) {
+        final aUrgency = a.deadline!.difference(now).inDays;
+        final bUrgency = b.deadline!.difference(now).inDays;
+        if (aUrgency != bUrgency) return aUrgency.compareTo(bUrgency);
+      } else if (a.deadline != null) {
+        return -1; // a has deadline, b doesn't - prioritize a
+      } else if (b.deadline != null) {
+        return 1; // b has deadline, a doesn't - prioritize b
+      }
+      
+      // Second, sort by priority
+      final priorityMap = {'high': 0, 'medium': 1, 'low': 2};
+      final aPriority = priorityMap[a.priority] ?? 3;
+      final bPriority = priorityMap[b.priority] ?? 3;
+      if (aPriority != bPriority) return aPriority.compareTo(bPriority);
+      
+      // Third, sort by hours needed (more hours = higher priority)
+      final aHours = a.hoursNeeded ?? 0;
+      final bHours = b.hoursNeeded ?? 0;
+      return bHours.compareTo(aHours);
+    });
+    
+    return sortedGoals;
   }
 
   /// Parse time string "HH:mm" to DateTime
@@ -873,11 +1521,13 @@ class PlanningService {
     StudentProfile profile,
     Map<String, dynamic> patterns,
     List<LearningGoal> goals,
+    int studyBlockMinutes,
+    int breakMinutes,
   ) {
     final reasoning = StringBuffer();
     reasoning.writeln('Plan generated based on:');
-    reasoning.writeln('- ${goals.length} active learning goals');
-    reasoning.writeln('- Preferred ${profile.preferredStudyBlockMinutes}min study blocks');
+    reasoning.writeln('- ${goals.length} active learning goals for this day');
+    reasoning.writeln('- Study blocks: ${studyBlockMinutes}min, Breaks: ${breakMinutes}min');
     reasoning.writeln('- Daily study limit: $maxDailyStudyMinutes minutes (${(maxDailyStudyMinutes / 60).toStringAsFixed(1)} hours)');
     
     if (patterns.containsKey('completionRate')) {
@@ -886,7 +1536,13 @@ class PlanningService {
     }
     
     if (patterns.containsKey('optimalBlockMinutes')) {
-      reasoning.writeln('- Adapted to ${patterns['optimalBlockMinutes']}min blocks based on performance');
+      reasoning.writeln('- Adapted block length suggested: ${patterns['optimalBlockMinutes']}min');
+    }
+
+    // Add deadline information
+    final upcomingDeadlines = goals.where((g) => g.deadline != null).toList();
+    if (upcomingDeadlines.isNotEmpty) {
+      reasoning.writeln('- ${upcomingDeadlines.length} goals with upcoming deadlines');
     }
 
     return reasoning.toString();
@@ -896,15 +1552,23 @@ class PlanningService {
   static Future<List<DailyPlan>> generateMultiplePlans(
     Session session,
     int studentProfileId,
-    int daysAhead,
-  ) async {
+    int daysAhead, {
+    int? customStudyBlockMinutes,
+    int? customBreakMinutes,
+  }) async {
     final plans = <DailyPlan>[];
     final today = DateTime.now();
 
     for (int i = 0; i < daysAhead; i++) {
       final date = today.add(Duration(days: i));
       try {
-        final plan = await generateDailyPlan(session, studentProfileId, date);
+        final plan = await generateDailyPlan(
+          session,
+          studentProfileId,
+          date,
+          customStudyBlockMinutes: customStudyBlockMinutes,
+          customBreakMinutes: customBreakMinutes,
+        );
         plans.add(plan);
       } catch (e) {
         session.log('Failed to generate plan for day $i: $e');
@@ -912,5 +1576,44 @@ class PlanningService {
     }
 
     return plans;
+  }
+
+  /// Get the current day's plan
+  static Future<DailyPlan?> getTodayPlan(
+    Session session,
+    int studentProfileId,
+  ) async {
+    final today = DateTime.now();
+    final normalizedDate = DateTime(today.year, today.month, today.day);
+    
+    return await DailyPlan.db.findFirstRow(
+      session,
+      where: (t) =>
+          t.studentProfileId.equals(studentProfileId) &
+          t.planDate.equals(normalizedDate),
+    );
+  }
+
+  /// Get a week's worth of plans
+  static Future<List<DailyPlan>> getWeekPlans(
+    Session session,
+    int studentProfileId,
+    DateTime weekStart,
+  ) async {
+    // Normalize to Monday
+    DateTime monday = weekStart;
+    while (monday.weekday != DateTime.monday) {
+      monday = monday.subtract(const Duration(days: 1));
+    }
+    
+    final sunday = monday.add(const Duration(days: 6));
+    
+    return await DailyPlan.db.find(
+      session,
+      where: (t) =>
+          t.studentProfileId.equals(studentProfileId) &
+          t.planDate.between(monday, sunday),
+      orderBy: (t) => t.planDate,
+    );
   }
 }

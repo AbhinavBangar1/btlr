@@ -17,15 +17,18 @@ import 'dart:async' as _i3;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _i4;
 import 'package:btlr_client/src/protocol/academic_schedule.dart' as _i5;
-import 'package:btlr_client/src/protocol/behaviour_log.dart' as _i6;
-import 'package:btlr_client/src/protocol/learning_goal.dart' as _i7;
-import 'package:btlr_client/src/protocol/opportunity.dart' as _i8;
-import 'package:btlr_client/src/protocol/daily_plan.dart' as _i9;
-import 'package:btlr_client/src/protocol/time_block.dart' as _i10;
-import 'package:btlr_client/src/protocol/student_profile.dart' as _i11;
-import 'package:btlr_client/src/protocol/voice_note.dart' as _i12;
-import 'package:btlr_client/src/protocol/greetings/greeting.dart' as _i13;
-import 'protocol.dart' as _i14;
+import 'package:btlr_client/src/protocol/activity_tracker.dart' as _i6;
+import 'package:btlr_client/src/protocol/behaviour_log.dart' as _i7;
+import 'package:btlr_client/src/protocol/learning_goal.dart' as _i8;
+import 'package:btlr_client/src/protocol/opportunity.dart' as _i9;
+import 'package:btlr_client/src/protocol/daily_plan.dart' as _i10;
+import 'package:btlr_client/src/protocol/time_block.dart' as _i11;
+import 'package:btlr_client/src/protocol/user_scraping_preference.dart' as _i12;
+import 'package:btlr_client/src/protocol/scraped_content.dart' as _i13;
+import 'package:btlr_client/src/protocol/student_profile.dart' as _i14;
+import 'package:btlr_client/src/protocol/voice_note.dart' as _i15;
+import 'package:btlr_client/src/protocol/greetings/greeting.dart' as _i16;
+import 'protocol.dart' as _i17;
 
 /// By extending [EmailIdpBaseEndpoint], the email identity provider endpoints
 /// are made available on the server and enable the corresponding sign-in widget
@@ -399,6 +402,85 @@ class EndpointAcademic extends _i2.EndpointRef {
   );
 }
 
+/// {@category Endpoint}
+class EndpointActivity extends _i2.EndpointRef {
+  EndpointActivity(_i2.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'activity';
+
+  _i3.Future<bool> setupActivityTracker(
+    int userId,
+    String platform,
+    String username,
+  ) => caller.callServerEndpoint<bool>(
+    'activity',
+    'setupActivityTracker',
+    {
+      'userId': userId,
+      'platform': platform,
+      'username': username,
+    },
+  );
+
+  _i3.Future<List<_i6.ActivityTracker>> getUserActivityTrackers(int userId) =>
+      caller.callServerEndpoint<List<_i6.ActivityTracker>>(
+        'activity',
+        'getUserActivityTrackers',
+        {'userId': userId},
+      );
+
+  _i3.Future<bool> syncAllActivities(int userId) =>
+      caller.callServerEndpoint<bool>(
+        'activity',
+        'syncAllActivities',
+        {'userId': userId},
+      );
+
+  _i3.Future<Map<String, dynamic>?> syncPlatformActivity(
+    int userId,
+    String platform,
+  ) => caller.callServerEndpoint<Map<String, dynamic>?>(
+    'activity',
+    'syncPlatformActivity',
+    {
+      'userId': userId,
+      'platform': platform,
+    },
+  );
+
+  _i3.Future<Map<String, dynamic>?> getActivityData(
+    int userId,
+    String platform,
+  ) => caller.callServerEndpoint<Map<String, dynamic>?>(
+    'activity',
+    'getActivityData',
+    {
+      'userId': userId,
+      'platform': platform,
+    },
+  );
+
+  _i3.Future<bool> deleteActivityTracker(
+    int userId,
+    String platform,
+  ) => caller.callServerEndpoint<bool>(
+    'activity',
+    'deleteActivityTracker',
+    {
+      'userId': userId,
+      'platform': platform,
+    },
+  );
+
+  _i3.Future<Map<String, dynamic>> getDashboard(int userId) =>
+      caller.callServerEndpoint<Map<String, dynamic>>(
+        'activity',
+        'getDashboard',
+        {'userId': userId},
+      );
+}
+
 /// Endpoint for logging and analyzing behavior patterns
 /// {@category Endpoint}
 class EndpointBehavior extends _i2.EndpointRef {
@@ -408,13 +490,13 @@ class EndpointBehavior extends _i2.EndpointRef {
   String get name => 'behavior';
 
   /// Log completion of a time block
-  _i3.Future<_i6.BehaviorLog> logCompletion(
+  _i3.Future<_i7.BehaviorLog> logCompletion(
     int studentProfileId,
     int timeBlockId,
     int? actualDuration,
     int? energyLevel,
     String? notes,
-  ) => caller.callServerEndpoint<_i6.BehaviorLog>(
+  ) => caller.callServerEndpoint<_i7.BehaviorLog>(
     'behavior',
     'logCompletion',
     {
@@ -427,12 +509,12 @@ class EndpointBehavior extends _i2.EndpointRef {
   );
 
   /// Log missed time block
-  _i3.Future<_i6.BehaviorLog> logMiss(
+  _i3.Future<_i7.BehaviorLog> logMiss(
     int studentProfileId,
     int timeBlockId,
     String reason,
     String? notes,
-  ) => caller.callServerEndpoint<_i6.BehaviorLog>(
+  ) => caller.callServerEndpoint<_i7.BehaviorLog>(
     'behavior',
     'logMiss',
     {
@@ -444,12 +526,12 @@ class EndpointBehavior extends _i2.EndpointRef {
   );
 
   /// Log postponed time block
-  _i3.Future<_i6.BehaviorLog> logPostpone(
+  _i3.Future<_i7.BehaviorLog> logPostpone(
     int studentProfileId,
     int timeBlockId,
     String reason,
     String? notes,
-  ) => caller.callServerEndpoint<_i6.BehaviorLog>(
+  ) => caller.callServerEndpoint<_i7.BehaviorLog>(
     'behavior',
     'logPostpone',
     {
@@ -461,11 +543,11 @@ class EndpointBehavior extends _i2.EndpointRef {
   );
 
   /// Log starting a time block
-  _i3.Future<_i6.BehaviorLog> logStart(
+  _i3.Future<_i7.BehaviorLog> logStart(
     int studentProfileId,
     int timeBlockId,
     String? notes,
-  ) => caller.callServerEndpoint<_i6.BehaviorLog>(
+  ) => caller.callServerEndpoint<_i7.BehaviorLog>(
     'behavior',
     'logStart',
     {
@@ -476,26 +558,26 @@ class EndpointBehavior extends _i2.EndpointRef {
   );
 
   /// Get behavior log by ID
-  _i3.Future<_i6.BehaviorLog?> getLog(int id) =>
-      caller.callServerEndpoint<_i6.BehaviorLog?>(
+  _i3.Future<_i7.BehaviorLog?> getLog(int id) =>
+      caller.callServerEndpoint<_i7.BehaviorLog?>(
         'behavior',
         'getLog',
         {'id': id},
       );
 
   /// Get all logs for a time block
-  _i3.Future<List<_i6.BehaviorLog>> getBlockLogs(int timeBlockId) =>
-      caller.callServerEndpoint<List<_i6.BehaviorLog>>(
+  _i3.Future<List<_i7.BehaviorLog>> getBlockLogs(int timeBlockId) =>
+      caller.callServerEndpoint<List<_i7.BehaviorLog>>(
         'behavior',
         'getBlockLogs',
         {'timeBlockId': timeBlockId},
       );
 
   /// Get all logs for a student
-  _i3.Future<List<_i6.BehaviorLog>> getStudentLogs(
+  _i3.Future<List<_i7.BehaviorLog>> getStudentLogs(
     int studentProfileId, {
     required int limit,
-  }) => caller.callServerEndpoint<List<_i6.BehaviorLog>>(
+  }) => caller.callServerEndpoint<List<_i7.BehaviorLog>>(
     'behavior',
     'getStudentLogs',
     {
@@ -505,11 +587,11 @@ class EndpointBehavior extends _i2.EndpointRef {
   );
 
   /// Get logs in date range
-  _i3.Future<List<_i6.BehaviorLog>> getLogsInRange(
+  _i3.Future<List<_i7.BehaviorLog>> getLogsInRange(
     int studentProfileId,
     DateTime startDate,
     DateTime endDate,
-  ) => caller.callServerEndpoint<List<_i6.BehaviorLog>>(
+  ) => caller.callServerEndpoint<List<_i7.BehaviorLog>>(
     'behavior',
     'getLogsInRange',
     {
@@ -520,10 +602,10 @@ class EndpointBehavior extends _i2.EndpointRef {
   );
 
   /// Get logs by action type
-  _i3.Future<List<_i6.BehaviorLog>> getLogsByAction(
+  _i3.Future<List<_i7.BehaviorLog>> getLogsByAction(
     int studentProfileId,
     String action,
-  ) => caller.callServerEndpoint<List<_i6.BehaviorLog>>(
+  ) => caller.callServerEndpoint<List<_i7.BehaviorLog>>(
     'behavior',
     'getLogsByAction',
     {
@@ -627,7 +709,7 @@ class EndpointBehavior extends _i2.EndpointRef {
   );
 
   /// Update behavior log (for corrections)
-  _i3.Future<_i6.BehaviorLog> updateLog(
+  _i3.Future<_i7.BehaviorLog> updateLog(
     int id,
     String? action,
     int? actualDuration,
@@ -635,7 +717,7 @@ class EndpointBehavior extends _i2.EndpointRef {
     String? reason,
     String? notes,
     String? context,
-  ) => caller.callServerEndpoint<_i6.BehaviorLog>(
+  ) => caller.callServerEndpoint<_i7.BehaviorLog>(
     'behavior',
     'updateLog',
     {
@@ -666,7 +748,7 @@ class EndpointGoal extends _i2.EndpointRef {
   String get name => 'goal';
 
   /// Create a new learning goal
-  _i3.Future<_i7.LearningGoal> createGoal(
+  _i3.Future<_i8.LearningGoal> createGoal(
     int studentProfileId,
     String title,
     String category,
@@ -675,7 +757,7 @@ class EndpointGoal extends _i2.EndpointRef {
     double? estimatedHours,
     DateTime? deadline,
     String? tags,
-  ) => caller.callServerEndpoint<_i7.LearningGoal>(
+  ) => caller.callServerEndpoint<_i8.LearningGoal>(
     'goal',
     'createGoal',
     {
@@ -691,20 +773,20 @@ class EndpointGoal extends _i2.EndpointRef {
   );
 
   /// Get learning goal by ID
-  _i3.Future<_i7.LearningGoal?> getGoal(int id) =>
-      caller.callServerEndpoint<_i7.LearningGoal?>(
+  _i3.Future<_i8.LearningGoal?> getGoal(int id) =>
+      caller.callServerEndpoint<_i8.LearningGoal?>(
         'goal',
         'getGoal',
         {'id': id},
       );
 
   /// Get all goals for a student
-  _i3.Future<List<_i7.LearningGoal>> getStudentGoals(
+  _i3.Future<List<_i8.LearningGoal>> getStudentGoals(
     int studentProfileId, {
     String? status,
     String? priority,
     String? category,
-  }) => caller.callServerEndpoint<List<_i7.LearningGoal>>(
+  }) => caller.callServerEndpoint<List<_i8.LearningGoal>>(
     'goal',
     'getStudentGoals',
     {
@@ -716,18 +798,18 @@ class EndpointGoal extends _i2.EndpointRef {
   );
 
   /// Get active goals (in_progress or not_started)
-  _i3.Future<List<_i7.LearningGoal>> getActiveGoals(int studentProfileId) =>
-      caller.callServerEndpoint<List<_i7.LearningGoal>>(
+  _i3.Future<List<_i8.LearningGoal>> getActiveGoals(int studentProfileId) =>
+      caller.callServerEndpoint<List<_i8.LearningGoal>>(
         'goal',
         'getActiveGoals',
         {'studentProfileId': studentProfileId},
       );
 
   /// Get goals by category
-  _i3.Future<List<_i7.LearningGoal>> getGoalsByCategory(
+  _i3.Future<List<_i8.LearningGoal>> getGoalsByCategory(
     int studentProfileId,
     String category,
-  ) => caller.callServerEndpoint<List<_i7.LearningGoal>>(
+  ) => caller.callServerEndpoint<List<_i8.LearningGoal>>(
     'goal',
     'getGoalsByCategory',
     {
@@ -737,7 +819,7 @@ class EndpointGoal extends _i2.EndpointRef {
   );
 
   /// Update learning goal
-  _i3.Future<_i7.LearningGoal> updateGoal(
+  _i3.Future<_i8.LearningGoal> updateGoal(
     int id,
     String? title,
     String? description,
@@ -748,7 +830,7 @@ class EndpointGoal extends _i2.EndpointRef {
     double? actualHours,
     DateTime? deadline,
     String? tags,
-  ) => caller.callServerEndpoint<_i7.LearningGoal>(
+  ) => caller.callServerEndpoint<_i8.LearningGoal>(
     'goal',
     'updateGoal',
     {
@@ -766,18 +848,18 @@ class EndpointGoal extends _i2.EndpointRef {
   );
 
   /// Mark goal as completed
-  _i3.Future<_i7.LearningGoal> completeGoal(int id) =>
-      caller.callServerEndpoint<_i7.LearningGoal>(
+  _i3.Future<_i8.LearningGoal> completeGoal(int id) =>
+      caller.callServerEndpoint<_i8.LearningGoal>(
         'goal',
         'completeGoal',
         {'id': id},
       );
 
   /// Increment actual hours spent on goal
-  _i3.Future<_i7.LearningGoal> addHours(
+  _i3.Future<_i8.LearningGoal> addHours(
     int id,
     double hours,
-  ) => caller.callServerEndpoint<_i7.LearningGoal>(
+  ) => caller.callServerEndpoint<_i8.LearningGoal>(
     'goal',
     'addHours',
     {
@@ -794,8 +876,8 @@ class EndpointGoal extends _i2.EndpointRef {
   );
 
   /// Get overdue goals
-  _i3.Future<List<_i7.LearningGoal>> getOverdueGoals(int studentProfileId) =>
-      caller.callServerEndpoint<List<_i7.LearningGoal>>(
+  _i3.Future<List<_i8.LearningGoal>> getOverdueGoals(int studentProfileId) =>
+      caller.callServerEndpoint<List<_i8.LearningGoal>>(
         'goal',
         'getOverdueGoals',
         {'studentProfileId': studentProfileId},
@@ -810,10 +892,10 @@ class EndpointGoal extends _i2.EndpointRef {
       );
 
   /// Get goals by priority
-  _i3.Future<List<_i7.LearningGoal>> getGoalsByPriority(
+  _i3.Future<List<_i8.LearningGoal>> getGoalsByPriority(
     int studentProfileId,
     String priority,
-  ) => caller.callServerEndpoint<List<_i7.LearningGoal>>(
+  ) => caller.callServerEndpoint<List<_i8.LearningGoal>>(
     'goal',
     'getGoalsByPriority',
     {
@@ -832,7 +914,7 @@ class EndpointOpportunity extends _i2.EndpointRef {
   String get name => 'opportunity';
 
   /// Create a new opportunity
-  _i3.Future<_i8.Opportunity> createOpportunity(
+  _i3.Future<_i9.Opportunity> createOpportunity(
     String title,
     String type,
     int? studentProfileId,
@@ -842,7 +924,7 @@ class EndpointOpportunity extends _i2.EndpointRef {
     DateTime? deadline,
     String? tags,
     int? prepTimeMinutes,
-  ) => caller.callServerEndpoint<_i8.Opportunity>(
+  ) => caller.callServerEndpoint<_i9.Opportunity>(
     'opportunity',
     'createOpportunity',
     {
@@ -859,19 +941,19 @@ class EndpointOpportunity extends _i2.EndpointRef {
   );
 
   /// Get opportunity by ID
-  _i3.Future<_i8.Opportunity?> getOpportunity(int id) =>
-      caller.callServerEndpoint<_i8.Opportunity?>(
+  _i3.Future<_i9.Opportunity?> getOpportunity(int id) =>
+      caller.callServerEndpoint<_i9.Opportunity?>(
         'opportunity',
         'getOpportunity',
         {'id': id},
       );
 
   /// Get all opportunities for a student
-  _i3.Future<List<_i8.Opportunity>> getStudentOpportunities(
+  _i3.Future<List<_i9.Opportunity>> getStudentOpportunities(
     int studentProfileId, {
     String? status,
     String? type,
-  }) => caller.callServerEndpoint<List<_i8.Opportunity>>(
+  }) => caller.callServerEndpoint<List<_i9.Opportunity>>(
     'opportunity',
     'getStudentOpportunities',
     {
@@ -882,19 +964,19 @@ class EndpointOpportunity extends _i2.EndpointRef {
   );
 
   /// Get unassigned opportunities (not yet matched to any student)
-  _i3.Future<List<_i8.Opportunity>> getUnassignedOpportunities({
+  _i3.Future<List<_i9.Opportunity>> getUnassignedOpportunities({
     String? type,
-  }) => caller.callServerEndpoint<List<_i8.Opportunity>>(
+  }) => caller.callServerEndpoint<List<_i9.Opportunity>>(
     'opportunity',
     'getUnassignedOpportunities',
     {'type': type},
   );
 
   /// Get high-relevance opportunities (score > threshold)
-  _i3.Future<List<_i8.Opportunity>> getRelevantOpportunities(
+  _i3.Future<List<_i9.Opportunity>> getRelevantOpportunities(
     int studentProfileId, {
     required double minScore,
-  }) => caller.callServerEndpoint<List<_i8.Opportunity>>(
+  }) => caller.callServerEndpoint<List<_i9.Opportunity>>(
     'opportunity',
     'getRelevantOpportunities',
     {
@@ -904,10 +986,10 @@ class EndpointOpportunity extends _i2.EndpointRef {
   );
 
   /// Get opportunities by type
-  _i3.Future<List<_i8.Opportunity>> getOpportunitiesByType(
+  _i3.Future<List<_i9.Opportunity>> getOpportunitiesByType(
     int studentProfileId,
     String type,
-  ) => caller.callServerEndpoint<List<_i8.Opportunity>>(
+  ) => caller.callServerEndpoint<List<_i9.Opportunity>>(
     'opportunity',
     'getOpportunitiesByType',
     {
@@ -917,10 +999,10 @@ class EndpointOpportunity extends _i2.EndpointRef {
   );
 
   /// Get opportunities with upcoming deadlines
-  _i3.Future<List<_i8.Opportunity>> getUpcomingDeadlines(
+  _i3.Future<List<_i9.Opportunity>> getUpcomingDeadlines(
     int studentProfileId, {
     required int daysAhead,
-  }) => caller.callServerEndpoint<List<_i8.Opportunity>>(
+  }) => caller.callServerEndpoint<List<_i9.Opportunity>>(
     'opportunity',
     'getUpcomingDeadlines',
     {
@@ -930,27 +1012,27 @@ class EndpointOpportunity extends _i2.EndpointRef {
   );
 
   /// Calculate and update relevance score for an opportunity
-  _i3.Future<_i8.Opportunity> calculateRelevance(int opportunityId) =>
-      caller.callServerEndpoint<_i8.Opportunity>(
+  _i3.Future<_i9.Opportunity> calculateRelevance(int opportunityId) =>
+      caller.callServerEndpoint<_i9.Opportunity>(
         'opportunity',
         'calculateRelevance',
         {'opportunityId': opportunityId},
       );
 
   /// Recalculate relevance for all opportunities
-  _i3.Future<List<_i8.Opportunity>> recalculateAllRelevance(
+  _i3.Future<List<_i9.Opportunity>> recalculateAllRelevance(
     int studentProfileId,
-  ) => caller.callServerEndpoint<List<_i8.Opportunity>>(
+  ) => caller.callServerEndpoint<List<_i9.Opportunity>>(
     'opportunity',
     'recalculateAllRelevance',
     {'studentProfileId': studentProfileId},
   );
 
   /// Get opportunities that can be auto-injected into schedule
-  _i3.Future<List<_i8.Opportunity>> getInjectableOpportunities(
+  _i3.Future<List<_i9.Opportunity>> getInjectableOpportunities(
     int studentProfileId,
     DateTime targetDate,
-  ) => caller.callServerEndpoint<List<_i8.Opportunity>>(
+  ) => caller.callServerEndpoint<List<_i9.Opportunity>>(
     'opportunity',
     'getInjectableOpportunities',
     {
@@ -960,10 +1042,10 @@ class EndpointOpportunity extends _i2.EndpointRef {
   );
 
   /// Update opportunity status
-  _i3.Future<_i8.Opportunity> updateStatus(
+  _i3.Future<_i9.Opportunity> updateStatus(
     int id,
     String status,
-  ) => caller.callServerEndpoint<_i8.Opportunity>(
+  ) => caller.callServerEndpoint<_i9.Opportunity>(
     'opportunity',
     'updateStatus',
     {
@@ -973,10 +1055,10 @@ class EndpointOpportunity extends _i2.EndpointRef {
   );
 
   /// Assign opportunity to a student
-  _i3.Future<_i8.Opportunity> assignToStudent(
+  _i3.Future<_i9.Opportunity> assignToStudent(
     int opportunityId,
     int studentProfileId,
-  ) => caller.callServerEndpoint<_i8.Opportunity>(
+  ) => caller.callServerEndpoint<_i9.Opportunity>(
     'opportunity',
     'assignToStudent',
     {
@@ -986,7 +1068,7 @@ class EndpointOpportunity extends _i2.EndpointRef {
   );
 
   /// Update opportunity
-  _i3.Future<_i8.Opportunity> updateOpportunity(
+  _i3.Future<_i9.Opportunity> updateOpportunity(
     int id,
     String? title,
     String? type,
@@ -998,7 +1080,7 @@ class EndpointOpportunity extends _i2.EndpointRef {
     String? status,
     int? prepTimeMinutes,
     double? relevanceScore,
-  ) => caller.callServerEndpoint<_i8.Opportunity>(
+  ) => caller.callServerEndpoint<_i9.Opportunity>(
     'opportunity',
     'updateOpportunity',
     {
@@ -1024,10 +1106,10 @@ class EndpointOpportunity extends _i2.EndpointRef {
   );
 
   /// Search opportunities by tags
-  _i3.Future<List<_i8.Opportunity>> searchByTags(
+  _i3.Future<List<_i9.Opportunity>> searchByTags(
     int studentProfileId,
     List<String> searchTags,
-  ) => caller.callServerEndpoint<List<_i8.Opportunity>>(
+  ) => caller.callServerEndpoint<List<_i9.Opportunity>>(
     'opportunity',
     'searchByTags',
     {
@@ -1037,10 +1119,10 @@ class EndpointOpportunity extends _i2.EndpointRef {
   );
 
   /// Get opportunities by status
-  _i3.Future<List<_i8.Opportunity>> getOpportunitiesByStatus(
+  _i3.Future<List<_i9.Opportunity>> getOpportunitiesByStatus(
     int studentProfileId,
     String status,
-  ) => caller.callServerEndpoint<List<_i8.Opportunity>>(
+  ) => caller.callServerEndpoint<List<_i9.Opportunity>>(
     'opportunity',
     'getOpportunitiesByStatus',
     {
@@ -1058,10 +1140,10 @@ class EndpointOpportunity extends _i2.EndpointRef {
       );
 
   /// Bulk import opportunities (for scraper)
-  _i3.Future<List<_i8.Opportunity>> bulkImport(
+  _i3.Future<List<_i9.Opportunity>> bulkImport(
     int? studentProfileId,
     List<Map<String, dynamic>> opportunitiesData,
-  ) => caller.callServerEndpoint<List<_i8.Opportunity>>(
+  ) => caller.callServerEndpoint<List<_i9.Opportunity>>(
     'opportunity',
     'bulkImport',
     {
@@ -1080,10 +1162,10 @@ class EndpointPlan extends _i2.EndpointRef {
   String get name => 'plan';
 
   /// Generate a daily plan for a specific date
-  _i3.Future<_i9.DailyPlan> generatePlan(
+  _i3.Future<_i10.DailyPlan> generatePlan(
     int studentProfileId,
     DateTime date,
-  ) => caller.callServerEndpoint<_i9.DailyPlan>(
+  ) => caller.callServerEndpoint<_i10.DailyPlan>(
     'plan',
     'generatePlan',
     {
@@ -1093,10 +1175,10 @@ class EndpointPlan extends _i2.EndpointRef {
   );
 
   /// Generate plans for multiple days ahead
-  _i3.Future<List<_i9.DailyPlan>> generateMultiplePlans(
+  _i3.Future<List<_i10.DailyPlan>> generateMultiplePlans(
     int studentProfileId,
     int daysAhead,
-  ) => caller.callServerEndpoint<List<_i9.DailyPlan>>(
+  ) => caller.callServerEndpoint<List<_i10.DailyPlan>>(
     'plan',
     'generateMultiplePlans',
     {
@@ -1106,18 +1188,18 @@ class EndpointPlan extends _i2.EndpointRef {
   );
 
   /// Get daily plan by ID
-  _i3.Future<_i9.DailyPlan?> getPlan(int id) =>
-      caller.callServerEndpoint<_i9.DailyPlan?>(
+  _i3.Future<_i10.DailyPlan?> getPlan(int id) =>
+      caller.callServerEndpoint<_i10.DailyPlan?>(
         'plan',
         'getPlan',
         {'id': id},
       );
 
   /// Get plan for a specific date
-  _i3.Future<_i9.DailyPlan?> getPlanByDate(
+  _i3.Future<_i10.DailyPlan?> getPlanByDate(
     int studentProfileId,
     DateTime date,
-  ) => caller.callServerEndpoint<_i9.DailyPlan?>(
+  ) => caller.callServerEndpoint<_i10.DailyPlan?>(
     'plan',
     'getPlanByDate',
     {
@@ -1127,10 +1209,10 @@ class EndpointPlan extends _i2.EndpointRef {
   );
 
   /// Get all plans for a student
-  _i3.Future<List<_i9.DailyPlan>> getStudentPlans(
+  _i3.Future<List<_i10.DailyPlan>> getStudentPlans(
     int studentProfileId, {
     required int limit,
-  }) => caller.callServerEndpoint<List<_i9.DailyPlan>>(
+  }) => caller.callServerEndpoint<List<_i10.DailyPlan>>(
     'plan',
     'getStudentPlans',
     {
@@ -1140,11 +1222,11 @@ class EndpointPlan extends _i2.EndpointRef {
   );
 
   /// Get plans in date range
-  _i3.Future<List<_i9.DailyPlan>> getPlansInRange(
+  _i3.Future<List<_i10.DailyPlan>> getPlansInRange(
     int studentProfileId,
     DateTime startDate,
     DateTime endDate,
-  ) => caller.callServerEndpoint<List<_i9.DailyPlan>>(
+  ) => caller.callServerEndpoint<List<_i10.DailyPlan>>(
     'plan',
     'getPlansInRange',
     {
@@ -1155,27 +1237,27 @@ class EndpointPlan extends _i2.EndpointRef {
   );
 
   /// Get time blocks for a plan
-  _i3.Future<List<_i10.TimeBlock>> getPlanBlocks(int dailyPlanId) =>
-      caller.callServerEndpoint<List<_i10.TimeBlock>>(
+  _i3.Future<List<_i11.TimeBlock>> getPlanBlocks(int dailyPlanId) =>
+      caller.callServerEndpoint<List<_i11.TimeBlock>>(
         'plan',
         'getPlanBlocks',
         {'dailyPlanId': dailyPlanId},
       );
 
   /// Get a specific time block
-  _i3.Future<_i10.TimeBlock?> getBlock(int id) =>
-      caller.callServerEndpoint<_i10.TimeBlock?>(
+  _i3.Future<_i11.TimeBlock?> getBlock(int id) =>
+      caller.callServerEndpoint<_i11.TimeBlock?>(
         'plan',
         'getBlock',
         {'id': id},
       );
 
   /// Get time blocks for a date range
-  _i3.Future<List<_i10.TimeBlock>> getBlocksInRange(
+  _i3.Future<List<_i11.TimeBlock>> getBlocksInRange(
     int studentProfileId,
     DateTime startDate,
     DateTime endDate,
-  ) => caller.callServerEndpoint<List<_i10.TimeBlock>>(
+  ) => caller.callServerEndpoint<List<_i11.TimeBlock>>(
     'plan',
     'getBlocksInRange',
     {
@@ -1186,7 +1268,7 @@ class EndpointPlan extends _i2.EndpointRef {
   );
 
   /// Update a time block
-  _i3.Future<_i10.TimeBlock> updateBlock(
+  _i3.Future<_i11.TimeBlock> updateBlock(
     int id,
     String? title,
     String? description,
@@ -1199,7 +1281,7 @@ class EndpointPlan extends _i2.EndpointRef {
     int? energyLevel,
     String? notes,
     String? missReason,
-  ) => caller.callServerEndpoint<_i10.TimeBlock>(
+  ) => caller.callServerEndpoint<_i11.TimeBlock>(
     'plan',
     'updateBlock',
     {
@@ -1219,12 +1301,12 @@ class EndpointPlan extends _i2.EndpointRef {
   );
 
   /// Mark time block as completed
-  _i3.Future<_i10.TimeBlock> completeBlock(
+  _i3.Future<_i11.TimeBlock> completeBlock(
     int id,
     int? actualDurationMinutes,
     int? energyLevel,
     String? notes,
-  ) => caller.callServerEndpoint<_i10.TimeBlock>(
+  ) => caller.callServerEndpoint<_i11.TimeBlock>(
     'plan',
     'completeBlock',
     {
@@ -1236,11 +1318,11 @@ class EndpointPlan extends _i2.EndpointRef {
   );
 
   /// Mark time block as missed
-  _i3.Future<_i10.TimeBlock> missBlock(
+  _i3.Future<_i11.TimeBlock> missBlock(
     int id,
     String missReason,
     String? notes,
-  ) => caller.callServerEndpoint<_i10.TimeBlock>(
+  ) => caller.callServerEndpoint<_i11.TimeBlock>(
     'plan',
     'missBlock',
     {
@@ -1258,50 +1340,50 @@ class EndpointPlan extends _i2.EndpointRef {
   );
 
   /// Regenerate a plan (creates new version)
-  _i3.Future<_i9.DailyPlan> regeneratePlan(int dailyPlanId) =>
-      caller.callServerEndpoint<_i9.DailyPlan>(
+  _i3.Future<_i10.DailyPlan> regeneratePlan(int dailyPlanId) =>
+      caller.callServerEndpoint<_i10.DailyPlan>(
         'plan',
         'regeneratePlan',
         {'dailyPlanId': dailyPlanId},
       );
 
   /// Get today's plan (convenience method)
-  _i3.Future<_i9.DailyPlan?> getTodaysPlan(int studentProfileId) =>
-      caller.callServerEndpoint<_i9.DailyPlan?>(
+  _i3.Future<_i10.DailyPlan?> getTodaysPlan(int studentProfileId) =>
+      caller.callServerEndpoint<_i10.DailyPlan?>(
         'plan',
         'getTodaysPlan',
         {'studentProfileId': studentProfileId},
       );
 
   /// Get or generate today's plan
-  _i3.Future<_i9.DailyPlan> getOrGenerateTodaysPlan(int studentProfileId) =>
-      caller.callServerEndpoint<_i9.DailyPlan>(
+  _i3.Future<_i10.DailyPlan> getOrGenerateTodaysPlan(int studentProfileId) =>
+      caller.callServerEndpoint<_i10.DailyPlan>(
         'plan',
         'getOrGenerateTodaysPlan',
         {'studentProfileId': studentProfileId},
       );
 
   /// Get upcoming time blocks (next 24 hours)
-  _i3.Future<List<_i10.TimeBlock>> getUpcomingBlocks(int studentProfileId) =>
-      caller.callServerEndpoint<List<_i10.TimeBlock>>(
+  _i3.Future<List<_i11.TimeBlock>> getUpcomingBlocks(int studentProfileId) =>
+      caller.callServerEndpoint<List<_i11.TimeBlock>>(
         'plan',
         'getUpcomingBlocks',
         {'studentProfileId': studentProfileId},
       );
 
   /// Get current time block (what should be happening now)
-  _i3.Future<_i10.TimeBlock?> getCurrentBlock(int studentProfileId) =>
-      caller.callServerEndpoint<_i10.TimeBlock?>(
+  _i3.Future<_i11.TimeBlock?> getCurrentBlock(int studentProfileId) =>
+      caller.callServerEndpoint<_i11.TimeBlock?>(
         'plan',
         'getCurrentBlock',
         {'studentProfileId': studentProfileId},
       );
 
   /// Get blocks by completion status
-  _i3.Future<List<_i10.TimeBlock>> getBlocksByStatus(
+  _i3.Future<List<_i11.TimeBlock>> getBlocksByStatus(
     int dailyPlanId,
     String completionStatus,
-  ) => caller.callServerEndpoint<List<_i10.TimeBlock>>(
+  ) => caller.callServerEndpoint<List<_i11.TimeBlock>>(
     'plan',
     'getBlocksByStatus',
     {
@@ -1319,6 +1401,89 @@ class EndpointPlan extends _i2.EndpointRef {
       );
 }
 
+/// {@category Endpoint}
+class EndpointScraping extends _i2.EndpointRef {
+  EndpointScraping(_i2.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'scraping';
+
+  _i3.Future<bool> addCustomScrapingUrl(
+    int userId,
+    String platform,
+    String customUrl,
+  ) => caller.callServerEndpoint<bool>(
+    'scraping',
+    'addCustomScrapingUrl',
+    {
+      'userId': userId,
+      'platform': platform,
+      'customUrl': customUrl,
+    },
+  );
+
+  _i3.Future<List<_i12.UserScrapingPreference>> getUserScrapingPreferences(
+    int userId,
+  ) => caller.callServerEndpoint<List<_i12.UserScrapingPreference>>(
+    'scraping',
+    'getUserScrapingPreferences',
+    {'userId': userId},
+  );
+
+  _i3.Future<List<_i13.ScrapedContent>> scrapeAllPlatforms(int userId) =>
+      caller.callServerEndpoint<List<_i13.ScrapedContent>>(
+        'scraping',
+        'scrapeAllPlatforms',
+        {'userId': userId},
+      );
+
+  _i3.Future<List<_i13.ScrapedContent>> scrapePlatform(
+    int userId,
+    String platform,
+  ) => caller.callServerEndpoint<List<_i13.ScrapedContent>>(
+    'scraping',
+    'scrapePlatform',
+    {
+      'userId': userId,
+      'platform': platform,
+    },
+  );
+
+  _i3.Future<List<_i13.ScrapedContent>> getScrapedContent(
+    int userId,
+    String? platform,
+    bool? isRead,
+    int limit,
+  ) => caller.callServerEndpoint<List<_i13.ScrapedContent>>(
+    'scraping',
+    'getScrapedContent',
+    {
+      'userId': userId,
+      'platform': platform,
+      'isRead': isRead,
+      'limit': limit,
+    },
+  );
+
+  _i3.Future<bool> markAsRead(int contentId) => caller.callServerEndpoint<bool>(
+    'scraping',
+    'markAsRead',
+    {'contentId': contentId},
+  );
+
+  _i3.Future<int> deleteOldContent(
+    int userId,
+    int daysOld,
+  ) => caller.callServerEndpoint<int>(
+    'scraping',
+    'deleteOldContent',
+    {
+      'userId': userId,
+      'daysOld': daysOld,
+    },
+  );
+}
+
 /// Endpoint for managing student profiles
 /// {@category Endpoint}
 class EndpointStudent extends _i2.EndpointRef {
@@ -1328,7 +1493,7 @@ class EndpointStudent extends _i2.EndpointRef {
   String get name => 'student';
 
   /// Create a new student profile
-  _i3.Future<_i11.StudentProfile> createProfile(
+  _i3.Future<_i14.StudentProfile> createProfile(
     String name,
     String email,
     String timezone,
@@ -1337,7 +1502,7 @@ class EndpointStudent extends _i2.EndpointRef {
     int preferredStudyBlockMinutes,
     int preferredBreakMinutes,
     String? preferredStudyTimes,
-  ) => caller.callServerEndpoint<_i11.StudentProfile>(
+  ) => caller.callServerEndpoint<_i14.StudentProfile>(
     'student',
     'createProfile',
     {
@@ -1353,23 +1518,23 @@ class EndpointStudent extends _i2.EndpointRef {
   );
 
   /// Get student profile by ID
-  _i3.Future<_i11.StudentProfile?> getProfile(int id) =>
-      caller.callServerEndpoint<_i11.StudentProfile?>(
+  _i3.Future<_i14.StudentProfile?> getProfile(int id) =>
+      caller.callServerEndpoint<_i14.StudentProfile?>(
         'student',
         'getProfile',
         {'id': id},
       );
 
   /// Get student profile by email
-  _i3.Future<_i11.StudentProfile?> getProfileByEmail(String email) =>
-      caller.callServerEndpoint<_i11.StudentProfile?>(
+  _i3.Future<_i14.StudentProfile?> getProfileByEmail(String email) =>
+      caller.callServerEndpoint<_i14.StudentProfile?>(
         'student',
         'getProfileByEmail',
         {'email': email},
       );
 
   /// Update student profile
-  _i3.Future<_i11.StudentProfile> updateProfile(
+  _i3.Future<_i14.StudentProfile> updateProfile(
     int id,
     String? name,
     String? timezone,
@@ -1378,7 +1543,7 @@ class EndpointStudent extends _i2.EndpointRef {
     int? preferredStudyBlockMinutes,
     int? preferredBreakMinutes,
     String? preferredStudyTimes,
-  ) => caller.callServerEndpoint<_i11.StudentProfile>(
+  ) => caller.callServerEndpoint<_i14.StudentProfile>(
     'student',
     'updateProfile',
     {
@@ -1401,10 +1566,10 @@ class EndpointStudent extends _i2.EndpointRef {
   );
 
   /// List all profiles (for admin purposes)
-  _i3.Future<List<_i11.StudentProfile>> listProfiles({
+  _i3.Future<List<_i14.StudentProfile>> listProfiles({
     required int limit,
     required int offset,
-  }) => caller.callServerEndpoint<List<_i11.StudentProfile>>(
+  }) => caller.callServerEndpoint<List<_i14.StudentProfile>>(
     'student',
     'listProfiles',
     {
@@ -1436,7 +1601,7 @@ class EndpointVoice extends _i2.EndpointRef {
   );
 
   /// Create a voice note
-  _i3.Future<_i12.VoiceNote> createNote(
+  _i3.Future<_i15.VoiceNote> createNote(
     int studentProfileId,
     String transcription,
     int? learningGoalId,
@@ -1446,7 +1611,7 @@ class EndpointVoice extends _i2.EndpointRef {
     String? sentiment,
     String? category,
     String? searchableContent,
-  ) => caller.callServerEndpoint<_i12.VoiceNote>(
+  ) => caller.callServerEndpoint<_i15.VoiceNote>(
     'voice',
     'createNote',
     {
@@ -1463,19 +1628,19 @@ class EndpointVoice extends _i2.EndpointRef {
   );
 
   /// Get voice note by ID
-  _i3.Future<_i12.VoiceNote?> getNote(int id) =>
-      caller.callServerEndpoint<_i12.VoiceNote?>(
+  _i3.Future<_i15.VoiceNote?> getNote(int id) =>
+      caller.callServerEndpoint<_i15.VoiceNote?>(
         'voice',
         'getNote',
         {'id': id},
       );
 
   /// Get all voice notes for a student
-  _i3.Future<List<_i12.VoiceNote>> getStudentNotes(
+  _i3.Future<List<_i15.VoiceNote>> getStudentNotes(
     int studentProfileId, {
     String? category,
     required int limit,
-  }) => caller.callServerEndpoint<List<_i12.VoiceNote>>(
+  }) => caller.callServerEndpoint<List<_i15.VoiceNote>>(
     'voice',
     'getStudentNotes',
     {
@@ -1486,18 +1651,18 @@ class EndpointVoice extends _i2.EndpointRef {
   );
 
   /// Get voice notes related to a goal
-  _i3.Future<List<_i12.VoiceNote>> getGoalNotes(int goalId) =>
-      caller.callServerEndpoint<List<_i12.VoiceNote>>(
+  _i3.Future<List<_i15.VoiceNote>> getGoalNotes(int goalId) =>
+      caller.callServerEndpoint<List<_i15.VoiceNote>>(
         'voice',
         'getGoalNotes',
         {'goalId': goalId},
       );
 
   /// Get voice notes by sentiment
-  _i3.Future<List<_i12.VoiceNote>> getNotesBySentiment(
+  _i3.Future<List<_i15.VoiceNote>> getNotesBySentiment(
     int studentProfileId,
     String sentiment,
-  ) => caller.callServerEndpoint<List<_i12.VoiceNote>>(
+  ) => caller.callServerEndpoint<List<_i15.VoiceNote>>(
     'voice',
     'getNotesBySentiment',
     {
@@ -1507,10 +1672,10 @@ class EndpointVoice extends _i2.EndpointRef {
   );
 
   /// Get voice notes by category
-  _i3.Future<List<_i12.VoiceNote>> getNotesByCategory(
+  _i3.Future<List<_i15.VoiceNote>> getNotesByCategory(
     int studentProfileId,
     String category,
-  ) => caller.callServerEndpoint<List<_i12.VoiceNote>>(
+  ) => caller.callServerEndpoint<List<_i15.VoiceNote>>(
     'voice',
     'getNotesByCategory',
     {
@@ -1520,10 +1685,10 @@ class EndpointVoice extends _i2.EndpointRef {
   );
 
   /// Search voice notes by transcription or searchable content
-  _i3.Future<List<_i12.VoiceNote>> searchNotes(
+  _i3.Future<List<_i15.VoiceNote>> searchNotes(
     int studentProfileId,
     String searchQuery,
-  ) => caller.callServerEndpoint<List<_i12.VoiceNote>>(
+  ) => caller.callServerEndpoint<List<_i15.VoiceNote>>(
     'voice',
     'searchNotes',
     {
@@ -1533,7 +1698,7 @@ class EndpointVoice extends _i2.EndpointRef {
   );
 
   /// Update voice note
-  _i3.Future<_i12.VoiceNote> updateNote(
+  _i3.Future<_i15.VoiceNote> updateNote(
     int id,
     String? transcription,
     int? learningGoalId,
@@ -1541,7 +1706,7 @@ class EndpointVoice extends _i2.EndpointRef {
     String? sentiment,
     String? category,
     String? searchableContent,
-  ) => caller.callServerEndpoint<_i12.VoiceNote>(
+  ) => caller.callServerEndpoint<_i15.VoiceNote>(
     'voice',
     'updateNote',
     {
@@ -1631,8 +1796,8 @@ class EndpointGreeting extends _i2.EndpointRef {
   String get name => 'greeting';
 
   /// Returns a personalized greeting message: "Hello {name}".
-  _i3.Future<_i13.Greeting> hello(String name) =>
-      caller.callServerEndpoint<_i13.Greeting>(
+  _i3.Future<_i16.Greeting> hello(String name) =>
+      caller.callServerEndpoint<_i16.Greeting>(
         'greeting',
         'hello',
         {'name': name},
@@ -1670,7 +1835,7 @@ class Client extends _i2.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i14.Protocol(),
+         _i17.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,
@@ -1682,10 +1847,12 @@ class Client extends _i2.ServerpodClientShared {
     emailIdp = EndpointEmailIdp(this);
     jwtRefresh = EndpointJwtRefresh(this);
     academic = EndpointAcademic(this);
+    activity = EndpointActivity(this);
     behavior = EndpointBehavior(this);
     goal = EndpointGoal(this);
     opportunity = EndpointOpportunity(this);
     plan = EndpointPlan(this);
+    scraping = EndpointScraping(this);
     student = EndpointStudent(this);
     voice = EndpointVoice(this);
     greeting = EndpointGreeting(this);
@@ -1698,6 +1865,8 @@ class Client extends _i2.ServerpodClientShared {
 
   late final EndpointAcademic academic;
 
+  late final EndpointActivity activity;
+
   late final EndpointBehavior behavior;
 
   late final EndpointGoal goal;
@@ -1705,6 +1874,8 @@ class Client extends _i2.ServerpodClientShared {
   late final EndpointOpportunity opportunity;
 
   late final EndpointPlan plan;
+
+  late final EndpointScraping scraping;
 
   late final EndpointStudent student;
 
@@ -1719,10 +1890,12 @@ class Client extends _i2.ServerpodClientShared {
     'emailIdp': emailIdp,
     'jwtRefresh': jwtRefresh,
     'academic': academic,
+    'activity': activity,
     'behavior': behavior,
     'goal': goal,
     'opportunity': opportunity,
     'plan': plan,
+    'scraping': scraping,
     'student': student,
     'voice': voice,
     'greeting': greeting,

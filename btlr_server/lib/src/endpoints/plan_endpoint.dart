@@ -591,7 +591,7 @@ class PlanEndpoint extends Endpoint {
   Future<TimeBlock?> getBlock(Session session, int id) async {
     try {
       return await TimeBlock.db.findById(session, id);
-    } catch (e, stack) {
+    } catch (e) {
       session.log('Error getting block $id: $e', level: LogLevel.error);
       return null;
     }

@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'dashboard_screen.dart';
 import 'goals_screen.dart';
 import 'schedule_screen.dart';
-import 'opportunities_screen.dart';
+// import 'opportunities_screen.dart';
 import 'settings_screen.dart';
+import 'discover_screen.dart';
 
 // --- BRAND CONSTANTS ---
 const Color kPrimaryBlue = Color(0xFF274B7F); // BTLR Sapphire Blue
@@ -24,7 +25,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     DashboardScreen(),
     GoalsScreen(),
     ScheduleScreen(),
-    OpportunitiesScreen(),
+    DiscoverScreen(),
     SettingsScreen(),
   ];
 

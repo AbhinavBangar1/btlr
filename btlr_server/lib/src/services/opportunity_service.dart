@@ -312,7 +312,7 @@ class OpportunityService {
       organization: organization,
       sourceUrl: sourceUrl,
       deadline: deadline,
-      tags: tags != null ? tags.toString() : null,
+      tags: tags?.toString(),
       prepTimeMinutes: prepTimeMinutes,
       discoveredAt: DateTime.now(),
     );

@@ -1,0 +1,13 @@
+class: UserScrapingPreference
+table: user_scraping_preferences
+fields:
+  userId: int
+  platform: String
+  customUrl: String?
+  isActive: bool, default=true
+  createdAt: DateTime, default=now
+indexes:
+  user_scraping_user_idx:
+    fields: userId
+  user_scraping_platform_idx:
+    fields: platform, userId

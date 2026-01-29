@@ -209,7 +209,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: category,
+                  initialValue: category,
                   decoration: const InputDecoration(labelText: 'CATEGORY'),
                   items: const [
                     DropdownMenuItem(value: 'technical_skill', child: Text('Technical Skill')),
@@ -221,7 +221,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: priority,
+                  initialValue: priority,
                   decoration: const InputDecoration(labelText: 'PRIORITY'),
                   items: const [
                     DropdownMenuItem(value: 'high', child: Text('High')),

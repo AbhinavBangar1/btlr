@@ -14,17 +14,19 @@ import 'package:serverpod/serverpod.dart' as _i1;
 import '../auth/email_idp_endpoint.dart' as _i2;
 import '../auth/jwt_refresh_endpoint.dart' as _i3;
 import '../endpoints/academic_endpoint.dart' as _i4;
-import '../endpoints/behavior_endpoint.dart' as _i5;
-import '../endpoints/goal_endpoint.dart' as _i6;
-import '../endpoints/opportunity_endpoint.dart' as _i7;
-import '../endpoints/plan_endpoint.dart' as _i8;
-import '../endpoints/student_endpoint.dart' as _i9;
-import '../endpoints/voice_endpoint.dart' as _i10;
-import '../greetings/greeting_endpoint.dart' as _i11;
+import '../endpoints/activity_endpoint.dart' as _i5;
+import '../endpoints/behavior_endpoint.dart' as _i6;
+import '../endpoints/goal_endpoint.dart' as _i7;
+import '../endpoints/opportunity_endpoint.dart' as _i8;
+import '../endpoints/plan_endpoint.dart' as _i9;
+import '../endpoints/scraping_endpoint.dart' as _i10;
+import '../endpoints/student_endpoint.dart' as _i11;
+import '../endpoints/voice_endpoint.dart' as _i12;
+import '../greetings/greeting_endpoint.dart' as _i13;
 import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
-    as _i12;
+    as _i14;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
-    as _i13;
+    as _i15;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
@@ -48,43 +50,55 @@ class Endpoints extends _i1.EndpointDispatch {
           'academic',
           null,
         ),
-      'behavior': _i5.BehaviorEndpoint()
+      'activity': _i5.ActivityEndpoint()
+        ..initialize(
+          server,
+          'activity',
+          null,
+        ),
+      'behavior': _i6.BehaviorEndpoint()
         ..initialize(
           server,
           'behavior',
           null,
         ),
-      'goal': _i6.GoalEndpoint()
+      'goal': _i7.GoalEndpoint()
         ..initialize(
           server,
           'goal',
           null,
         ),
-      'opportunity': _i7.OpportunityEndpoint()
+      'opportunity': _i8.OpportunityEndpoint()
         ..initialize(
           server,
           'opportunity',
           null,
         ),
-      'plan': _i8.PlanEndpoint()
+      'plan': _i9.PlanEndpoint()
         ..initialize(
           server,
           'plan',
           null,
         ),
-      'student': _i9.StudentEndpoint()
+      'scraping': _i10.ScrapingEndpoint()
+        ..initialize(
+          server,
+          'scraping',
+          null,
+        ),
+      'student': _i11.StudentEndpoint()
         ..initialize(
           server,
           'student',
           null,
         ),
-      'voice': _i10.VoiceEndpoint()
+      'voice': _i12.VoiceEndpoint()
         ..initialize(
           server,
           'voice',
           null,
         ),
-      'greeting': _i11.GreetingEndpoint()
+      'greeting': _i13.GreetingEndpoint()
         ..initialize(
           server,
           'greeting',
@@ -626,6 +640,175 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
+    connectors['activity'] = _i1.EndpointConnector(
+      name: 'activity',
+      endpoint: endpoints['activity']!,
+      methodConnectors: {
+        'setupActivityTracker': _i1.MethodConnector(
+          name: 'setupActivityTracker',
+          params: {
+            'userId': _i1.ParameterDescription(
+              name: 'userId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'platform': _i1.ParameterDescription(
+              name: 'platform',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'username': _i1.ParameterDescription(
+              name: 'username',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['activity'] as _i5.ActivityEndpoint)
+                  .setupActivityTracker(
+                    session,
+                    params['userId'],
+                    params['platform'],
+                    params['username'],
+                  ),
+        ),
+        'getUserActivityTrackers': _i1.MethodConnector(
+          name: 'getUserActivityTrackers',
+          params: {
+            'userId': _i1.ParameterDescription(
+              name: 'userId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['activity'] as _i5.ActivityEndpoint)
+                  .getUserActivityTrackers(
+                    session,
+                    params['userId'],
+                  ),
+        ),
+        'syncAllActivities': _i1.MethodConnector(
+          name: 'syncAllActivities',
+          params: {
+            'userId': _i1.ParameterDescription(
+              name: 'userId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['activity'] as _i5.ActivityEndpoint)
+                  .syncAllActivities(
+                    session,
+                    params['userId'],
+                  ),
+        ),
+        'syncPlatformActivity': _i1.MethodConnector(
+          name: 'syncPlatformActivity',
+          params: {
+            'userId': _i1.ParameterDescription(
+              name: 'userId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'platform': _i1.ParameterDescription(
+              name: 'platform',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['activity'] as _i5.ActivityEndpoint)
+                  .syncPlatformActivity(
+                    session,
+                    params['userId'],
+                    params['platform'],
+                  ),
+        ),
+        'getActivityData': _i1.MethodConnector(
+          name: 'getActivityData',
+          params: {
+            'userId': _i1.ParameterDescription(
+              name: 'userId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'platform': _i1.ParameterDescription(
+              name: 'platform',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['activity'] as _i5.ActivityEndpoint)
+                  .getActivityData(
+                    session,
+                    params['userId'],
+                    params['platform'],
+                  ),
+        ),
+        'deleteActivityTracker': _i1.MethodConnector(
+          name: 'deleteActivityTracker',
+          params: {
+            'userId': _i1.ParameterDescription(
+              name: 'userId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'platform': _i1.ParameterDescription(
+              name: 'platform',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['activity'] as _i5.ActivityEndpoint)
+                  .deleteActivityTracker(
+                    session,
+                    params['userId'],
+                    params['platform'],
+                  ),
+        ),
+        'getDashboard': _i1.MethodConnector(
+          name: 'getDashboard',
+          params: {
+            'userId': _i1.ParameterDescription(
+              name: 'userId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['activity'] as _i5.ActivityEndpoint).getDashboard(
+                    session,
+                    params['userId'],
+                  ),
+        ),
+      },
+    );
     connectors['behavior'] = _i1.EndpointConnector(
       name: 'behavior',
       endpoint: endpoints['behavior']!,
@@ -664,7 +847,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['behavior'] as _i5.BehaviorEndpoint).logCompletion(
+                  (endpoints['behavior'] as _i6.BehaviorEndpoint).logCompletion(
                     session,
                     params['studentProfileId'],
                     params['timeBlockId'],
@@ -702,7 +885,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['behavior'] as _i5.BehaviorEndpoint).logMiss(
+                  (endpoints['behavior'] as _i6.BehaviorEndpoint).logMiss(
                     session,
                     params['studentProfileId'],
                     params['timeBlockId'],
@@ -739,7 +922,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['behavior'] as _i5.BehaviorEndpoint).logPostpone(
+                  (endpoints['behavior'] as _i6.BehaviorEndpoint).logPostpone(
                     session,
                     params['studentProfileId'],
                     params['timeBlockId'],
@@ -771,7 +954,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['behavior'] as _i5.BehaviorEndpoint).logStart(
+                  (endpoints['behavior'] as _i6.BehaviorEndpoint).logStart(
                     session,
                     params['studentProfileId'],
                     params['timeBlockId'],
@@ -791,7 +974,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['behavior'] as _i5.BehaviorEndpoint).getLog(
+              ) async => (endpoints['behavior'] as _i6.BehaviorEndpoint).getLog(
                 session,
                 params['id'],
               ),
@@ -810,7 +993,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['behavior'] as _i5.BehaviorEndpoint).getBlockLogs(
+                  (endpoints['behavior'] as _i6.BehaviorEndpoint).getBlockLogs(
                     session,
                     params['timeBlockId'],
                   ),
@@ -833,7 +1016,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['behavior'] as _i5.BehaviorEndpoint)
+              ) async => (endpoints['behavior'] as _i6.BehaviorEndpoint)
                   .getStudentLogs(
                     session,
                     params['studentProfileId'],
@@ -863,7 +1046,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['behavior'] as _i5.BehaviorEndpoint)
+              ) async => (endpoints['behavior'] as _i6.BehaviorEndpoint)
                   .getLogsInRange(
                     session,
                     params['studentProfileId'],
@@ -889,7 +1072,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['behavior'] as _i5.BehaviorEndpoint)
+              ) async => (endpoints['behavior'] as _i6.BehaviorEndpoint)
                   .getLogsByAction(
                     session,
                     params['studentProfileId'],
@@ -914,7 +1097,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['behavior'] as _i5.BehaviorEndpoint)
+              ) async => (endpoints['behavior'] as _i6.BehaviorEndpoint)
                   .getCompletionStats(
                     session,
                     params['studentProfileId'],
@@ -939,7 +1122,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['behavior'] as _i5.BehaviorEndpoint)
+              ) async => (endpoints['behavior'] as _i6.BehaviorEndpoint)
                   .getDailyCompletionRates(
                     session,
                     params['studentProfileId'],
@@ -964,7 +1147,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['behavior'] as _i5.BehaviorEndpoint)
+              ) async => (endpoints['behavior'] as _i6.BehaviorEndpoint)
                   .analyzeRecentBehavior(
                     session,
                     params['studentProfileId'],
@@ -984,7 +1167,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['behavior'] as _i5.BehaviorEndpoint)
+              ) async => (endpoints['behavior'] as _i6.BehaviorEndpoint)
                   .getOptimalBlockLength(
                     session,
                     params['studentProfileId'],
@@ -1008,7 +1191,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['behavior'] as _i5.BehaviorEndpoint)
+              ) async => (endpoints['behavior'] as _i6.BehaviorEndpoint)
                   .getMissReasonsBreakdown(
                     session,
                     params['studentProfileId'],
@@ -1033,7 +1216,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['behavior'] as _i5.BehaviorEndpoint)
+              ) async => (endpoints['behavior'] as _i6.BehaviorEndpoint)
                   .getTimeOfDayPerformance(
                     session,
                     params['studentProfileId'],
@@ -1054,7 +1237,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['behavior'] as _i5.BehaviorEndpoint).getStreakInfo(
+                  (endpoints['behavior'] as _i6.BehaviorEndpoint).getStreakInfo(
                     session,
                     params['studentProfileId'],
                   ),
@@ -1077,7 +1260,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['behavior'] as _i5.BehaviorEndpoint)
+              ) async => (endpoints['behavior'] as _i6.BehaviorEndpoint)
                   .getEnergyTrends(
                     session,
                     params['studentProfileId'],
@@ -1128,7 +1311,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['behavior'] as _i5.BehaviorEndpoint).updateLog(
+                  (endpoints['behavior'] as _i6.BehaviorEndpoint).updateLog(
                     session,
                     params['id'],
                     params['action'],
@@ -1153,7 +1336,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['behavior'] as _i5.BehaviorEndpoint).deleteLog(
+                  (endpoints['behavior'] as _i6.BehaviorEndpoint).deleteLog(
                     session,
                     params['id'],
                   ),
@@ -1212,7 +1395,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['goal'] as _i6.GoalEndpoint).createGoal(
+              ) async => (endpoints['goal'] as _i7.GoalEndpoint).createGoal(
                 session,
                 params['studentProfileId'],
                 params['title'],
@@ -1237,7 +1420,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['goal'] as _i6.GoalEndpoint).getGoal(
+              ) async => (endpoints['goal'] as _i7.GoalEndpoint).getGoal(
                 session,
                 params['id'],
               ),
@@ -1271,7 +1454,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['goal'] as _i6.GoalEndpoint).getStudentGoals(
+                  (endpoints['goal'] as _i7.GoalEndpoint).getStudentGoals(
                     session,
                     params['studentProfileId'],
                     status: params['status'],
@@ -1292,7 +1475,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['goal'] as _i6.GoalEndpoint).getActiveGoals(
+              ) async => (endpoints['goal'] as _i7.GoalEndpoint).getActiveGoals(
                 session,
                 params['studentProfileId'],
               ),
@@ -1316,7 +1499,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['goal'] as _i6.GoalEndpoint).getGoalsByCategory(
+                  (endpoints['goal'] as _i7.GoalEndpoint).getGoalsByCategory(
                     session,
                     params['studentProfileId'],
                     params['category'],
@@ -1380,7 +1563,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['goal'] as _i6.GoalEndpoint).updateGoal(
+              ) async => (endpoints['goal'] as _i7.GoalEndpoint).updateGoal(
                 session,
                 params['id'],
                 params['title'],
@@ -1407,7 +1590,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['goal'] as _i6.GoalEndpoint).completeGoal(
+              ) async => (endpoints['goal'] as _i7.GoalEndpoint).completeGoal(
                 session,
                 params['id'],
               ),
@@ -1430,7 +1613,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['goal'] as _i6.GoalEndpoint).addHours(
+              ) async => (endpoints['goal'] as _i7.GoalEndpoint).addHours(
                 session,
                 params['id'],
                 params['hours'],
@@ -1449,7 +1632,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['goal'] as _i6.GoalEndpoint).deleteGoal(
+              ) async => (endpoints['goal'] as _i7.GoalEndpoint).deleteGoal(
                 session,
                 params['id'],
               ),
@@ -1468,7 +1651,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['goal'] as _i6.GoalEndpoint).getOverdueGoals(
+                  (endpoints['goal'] as _i7.GoalEndpoint).getOverdueGoals(
                     session,
                     params['studentProfileId'],
                   ),
@@ -1486,7 +1669,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['goal'] as _i6.GoalEndpoint).getGoalStats(
+              ) async => (endpoints['goal'] as _i7.GoalEndpoint).getGoalStats(
                 session,
                 params['studentProfileId'],
               ),
@@ -1510,7 +1693,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['goal'] as _i6.GoalEndpoint).getGoalsByPriority(
+                  (endpoints['goal'] as _i7.GoalEndpoint).getGoalsByPriority(
                     session,
                     params['studentProfileId'],
                     params['priority'],
@@ -1575,7 +1758,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['opportunity'] as _i7.OpportunityEndpoint)
+              ) async => (endpoints['opportunity'] as _i8.OpportunityEndpoint)
                   .createOpportunity(
                     session,
                     params['title'],
@@ -1602,7 +1785,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['opportunity'] as _i7.OpportunityEndpoint)
+              ) async => (endpoints['opportunity'] as _i8.OpportunityEndpoint)
                   .getOpportunity(
                     session,
                     params['id'],
@@ -1631,7 +1814,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['opportunity'] as _i7.OpportunityEndpoint)
+              ) async => (endpoints['opportunity'] as _i8.OpportunityEndpoint)
                   .getStudentOpportunities(
                     session,
                     params['studentProfileId'],
@@ -1652,7 +1835,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['opportunity'] as _i7.OpportunityEndpoint)
+              ) async => (endpoints['opportunity'] as _i8.OpportunityEndpoint)
                   .getUnassignedOpportunities(
                     session,
                     type: params['type'],
@@ -1676,7 +1859,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['opportunity'] as _i7.OpportunityEndpoint)
+              ) async => (endpoints['opportunity'] as _i8.OpportunityEndpoint)
                   .getRelevantOpportunities(
                     session,
                     params['studentProfileId'],
@@ -1701,7 +1884,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['opportunity'] as _i7.OpportunityEndpoint)
+              ) async => (endpoints['opportunity'] as _i8.OpportunityEndpoint)
                   .getOpportunitiesByType(
                     session,
                     params['studentProfileId'],
@@ -1726,7 +1909,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['opportunity'] as _i7.OpportunityEndpoint)
+              ) async => (endpoints['opportunity'] as _i8.OpportunityEndpoint)
                   .getUpcomingDeadlines(
                     session,
                     params['studentProfileId'],
@@ -1746,7 +1929,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['opportunity'] as _i7.OpportunityEndpoint)
+              ) async => (endpoints['opportunity'] as _i8.OpportunityEndpoint)
                   .calculateRelevance(
                     session,
                     params['opportunityId'],
@@ -1765,7 +1948,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['opportunity'] as _i7.OpportunityEndpoint)
+              ) async => (endpoints['opportunity'] as _i8.OpportunityEndpoint)
                   .recalculateAllRelevance(
                     session,
                     params['studentProfileId'],
@@ -1789,7 +1972,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['opportunity'] as _i7.OpportunityEndpoint)
+              ) async => (endpoints['opportunity'] as _i8.OpportunityEndpoint)
                   .getInjectableOpportunities(
                     session,
                     params['studentProfileId'],
@@ -1814,7 +1997,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['opportunity'] as _i7.OpportunityEndpoint)
+              ) async => (endpoints['opportunity'] as _i8.OpportunityEndpoint)
                   .updateStatus(
                     session,
                     params['id'],
@@ -1839,7 +2022,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['opportunity'] as _i7.OpportunityEndpoint)
+              ) async => (endpoints['opportunity'] as _i8.OpportunityEndpoint)
                   .assignToStudent(
                     session,
                     params['opportunityId'],
@@ -1909,7 +2092,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['opportunity'] as _i7.OpportunityEndpoint)
+              ) async => (endpoints['opportunity'] as _i8.OpportunityEndpoint)
                   .updateOpportunity(
                     session,
                     params['id'],
@@ -1938,7 +2121,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['opportunity'] as _i7.OpportunityEndpoint)
+              ) async => (endpoints['opportunity'] as _i8.OpportunityEndpoint)
                   .deleteOpportunity(
                     session,
                     params['id'],
@@ -1962,7 +2145,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['opportunity'] as _i7.OpportunityEndpoint)
+              ) async => (endpoints['opportunity'] as _i8.OpportunityEndpoint)
                   .searchByTags(
                     session,
                     params['studentProfileId'],
@@ -1987,7 +2170,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['opportunity'] as _i7.OpportunityEndpoint)
+              ) async => (endpoints['opportunity'] as _i8.OpportunityEndpoint)
                   .getOpportunitiesByStatus(
                     session,
                     params['studentProfileId'],
@@ -2007,7 +2190,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['opportunity'] as _i7.OpportunityEndpoint)
+              ) async => (endpoints['opportunity'] as _i8.OpportunityEndpoint)
                   .getOpportunityStats(
                     session,
                     params['studentProfileId'],
@@ -2031,7 +2214,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['opportunity'] as _i7.OpportunityEndpoint)
+              ) async => (endpoints['opportunity'] as _i8.OpportunityEndpoint)
                   .bulkImport(
                     session,
                     params['studentProfileId'],
@@ -2062,7 +2245,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['plan'] as _i8.PlanEndpoint).generatePlan(
+              ) async => (endpoints['plan'] as _i9.PlanEndpoint).generatePlan(
                 session,
                 params['studentProfileId'],
                 params['date'],
@@ -2087,7 +2270,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['plan'] as _i8.PlanEndpoint).generateMultiplePlans(
+                  (endpoints['plan'] as _i9.PlanEndpoint).generateMultiplePlans(
                     session,
                     params['studentProfileId'],
                     params['daysAhead'],
@@ -2106,7 +2289,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['plan'] as _i8.PlanEndpoint).getPlan(
+              ) async => (endpoints['plan'] as _i9.PlanEndpoint).getPlan(
                 session,
                 params['id'],
               ),
@@ -2129,7 +2312,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['plan'] as _i8.PlanEndpoint).getPlanByDate(
+              ) async => (endpoints['plan'] as _i9.PlanEndpoint).getPlanByDate(
                 session,
                 params['studentProfileId'],
                 params['date'],
@@ -2154,7 +2337,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['plan'] as _i8.PlanEndpoint).getStudentPlans(
+                  (endpoints['plan'] as _i9.PlanEndpoint).getStudentPlans(
                     session,
                     params['studentProfileId'],
                     limit: params['limit'],
@@ -2184,7 +2367,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['plan'] as _i8.PlanEndpoint).getPlansInRange(
+                  (endpoints['plan'] as _i9.PlanEndpoint).getPlansInRange(
                     session,
                     params['studentProfileId'],
                     params['startDate'],
@@ -2204,7 +2387,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['plan'] as _i8.PlanEndpoint).getPlanBlocks(
+              ) async => (endpoints['plan'] as _i9.PlanEndpoint).getPlanBlocks(
                 session,
                 params['dailyPlanId'],
               ),
@@ -2222,7 +2405,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['plan'] as _i8.PlanEndpoint).getBlock(
+              ) async => (endpoints['plan'] as _i9.PlanEndpoint).getBlock(
                 session,
                 params['id'],
               ),
@@ -2251,7 +2434,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['plan'] as _i8.PlanEndpoint).getBlocksInRange(
+                  (endpoints['plan'] as _i9.PlanEndpoint).getBlocksInRange(
                     session,
                     params['studentProfileId'],
                     params['startDate'],
@@ -2326,7 +2509,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['plan'] as _i8.PlanEndpoint).updateBlock(
+              ) async => (endpoints['plan'] as _i9.PlanEndpoint).updateBlock(
                 session,
                 params['id'],
                 params['title'],
@@ -2370,7 +2553,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['plan'] as _i8.PlanEndpoint).completeBlock(
+              ) async => (endpoints['plan'] as _i9.PlanEndpoint).completeBlock(
                 session,
                 params['id'],
                 params['actualDurationMinutes'],
@@ -2401,7 +2584,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['plan'] as _i8.PlanEndpoint).missBlock(
+              ) async => (endpoints['plan'] as _i9.PlanEndpoint).missBlock(
                 session,
                 params['id'],
                 params['missReason'],
@@ -2421,7 +2604,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['plan'] as _i8.PlanEndpoint).deleteBlock(
+              ) async => (endpoints['plan'] as _i9.PlanEndpoint).deleteBlock(
                 session,
                 params['id'],
               ),
@@ -2439,7 +2622,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['plan'] as _i8.PlanEndpoint).regeneratePlan(
+              ) async => (endpoints['plan'] as _i9.PlanEndpoint).regeneratePlan(
                 session,
                 params['dailyPlanId'],
               ),
@@ -2457,7 +2640,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['plan'] as _i8.PlanEndpoint).getTodaysPlan(
+              ) async => (endpoints['plan'] as _i9.PlanEndpoint).getTodaysPlan(
                 session,
                 params['studentProfileId'],
               ),
@@ -2475,7 +2658,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['plan'] as _i8.PlanEndpoint)
+              ) async => (endpoints['plan'] as _i9.PlanEndpoint)
                   .getOrGenerateTodaysPlan(
                     session,
                     params['studentProfileId'],
@@ -2495,7 +2678,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['plan'] as _i8.PlanEndpoint).getUpcomingBlocks(
+                  (endpoints['plan'] as _i9.PlanEndpoint).getUpcomingBlocks(
                     session,
                     params['studentProfileId'],
                   ),
@@ -2514,7 +2697,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['plan'] as _i8.PlanEndpoint).getCurrentBlock(
+                  (endpoints['plan'] as _i9.PlanEndpoint).getCurrentBlock(
                     session,
                     params['studentProfileId'],
                   ),
@@ -2538,7 +2721,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['plan'] as _i8.PlanEndpoint).getBlocksByStatus(
+                  (endpoints['plan'] as _i9.PlanEndpoint).getBlocksByStatus(
                     session,
                     params['dailyPlanId'],
                     params['completionStatus'],
@@ -2557,10 +2740,191 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['plan'] as _i8.PlanEndpoint).getPlanStats(
+              ) async => (endpoints['plan'] as _i9.PlanEndpoint).getPlanStats(
                 session,
                 params['studentProfileId'],
               ),
+        ),
+      },
+    );
+    connectors['scraping'] = _i1.EndpointConnector(
+      name: 'scraping',
+      endpoint: endpoints['scraping']!,
+      methodConnectors: {
+        'addCustomScrapingUrl': _i1.MethodConnector(
+          name: 'addCustomScrapingUrl',
+          params: {
+            'userId': _i1.ParameterDescription(
+              name: 'userId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'platform': _i1.ParameterDescription(
+              name: 'platform',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'customUrl': _i1.ParameterDescription(
+              name: 'customUrl',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['scraping'] as _i10.ScrapingEndpoint)
+                  .addCustomScrapingUrl(
+                    session,
+                    params['userId'],
+                    params['platform'],
+                    params['customUrl'],
+                  ),
+        ),
+        'getUserScrapingPreferences': _i1.MethodConnector(
+          name: 'getUserScrapingPreferences',
+          params: {
+            'userId': _i1.ParameterDescription(
+              name: 'userId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['scraping'] as _i10.ScrapingEndpoint)
+                  .getUserScrapingPreferences(
+                    session,
+                    params['userId'],
+                  ),
+        ),
+        'scrapeAllPlatforms': _i1.MethodConnector(
+          name: 'scrapeAllPlatforms',
+          params: {
+            'userId': _i1.ParameterDescription(
+              name: 'userId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['scraping'] as _i10.ScrapingEndpoint)
+                  .scrapeAllPlatforms(
+                    session,
+                    params['userId'],
+                  ),
+        ),
+        'scrapePlatform': _i1.MethodConnector(
+          name: 'scrapePlatform',
+          params: {
+            'userId': _i1.ParameterDescription(
+              name: 'userId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'platform': _i1.ParameterDescription(
+              name: 'platform',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['scraping'] as _i10.ScrapingEndpoint)
+                  .scrapePlatform(
+                    session,
+                    params['userId'],
+                    params['platform'],
+                  ),
+        ),
+        'getScrapedContent': _i1.MethodConnector(
+          name: 'getScrapedContent',
+          params: {
+            'userId': _i1.ParameterDescription(
+              name: 'userId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'platform': _i1.ParameterDescription(
+              name: 'platform',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+            'isRead': _i1.ParameterDescription(
+              name: 'isRead',
+              type: _i1.getType<bool?>(),
+              nullable: true,
+            ),
+            'limit': _i1.ParameterDescription(
+              name: 'limit',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['scraping'] as _i10.ScrapingEndpoint)
+                  .getScrapedContent(
+                    session,
+                    params['userId'],
+                    params['platform'],
+                    params['isRead'],
+                    params['limit'],
+                  ),
+        ),
+        'markAsRead': _i1.MethodConnector(
+          name: 'markAsRead',
+          params: {
+            'contentId': _i1.ParameterDescription(
+              name: 'contentId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['scraping'] as _i10.ScrapingEndpoint).markAsRead(
+                    session,
+                    params['contentId'],
+                  ),
+        ),
+        'deleteOldContent': _i1.MethodConnector(
+          name: 'deleteOldContent',
+          params: {
+            'userId': _i1.ParameterDescription(
+              name: 'userId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+            'daysOld': _i1.ParameterDescription(
+              name: 'daysOld',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['scraping'] as _i10.ScrapingEndpoint)
+                  .deleteOldContent(
+                    session,
+                    params['userId'],
+                    params['daysOld'],
+                  ),
         ),
       },
     );
@@ -2617,7 +2981,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['student'] as _i9.StudentEndpoint).createProfile(
+                  (endpoints['student'] as _i11.StudentEndpoint).createProfile(
                     session,
                     params['name'],
                     params['email'],
@@ -2643,7 +3007,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['student'] as _i9.StudentEndpoint).getProfile(
+                  (endpoints['student'] as _i11.StudentEndpoint).getProfile(
                     session,
                     params['id'],
                   ),
@@ -2661,7 +3025,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['student'] as _i9.StudentEndpoint)
+              ) async => (endpoints['student'] as _i11.StudentEndpoint)
                   .getProfileByEmail(
                     session,
                     params['email'],
@@ -2716,7 +3080,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['student'] as _i9.StudentEndpoint).updateProfile(
+                  (endpoints['student'] as _i11.StudentEndpoint).updateProfile(
                     session,
                     params['id'],
                     params['name'],
@@ -2742,7 +3106,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['student'] as _i9.StudentEndpoint).deleteProfile(
+                  (endpoints['student'] as _i11.StudentEndpoint).deleteProfile(
                     session,
                     params['id'],
                   ),
@@ -2766,7 +3130,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['student'] as _i9.StudentEndpoint).listProfiles(
+                  (endpoints['student'] as _i11.StudentEndpoint).listProfiles(
                     session,
                     limit: params['limit'],
                     offset: params['offset'],
@@ -2797,7 +3161,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['voice'] as _i10.VoiceEndpoint).processCommand(
+                  (endpoints['voice'] as _i12.VoiceEndpoint).processCommand(
                     session,
                     params['studentProfileId'],
                     params['transcription'],
@@ -2856,7 +3220,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['voice'] as _i10.VoiceEndpoint).createNote(
+              ) async => (endpoints['voice'] as _i12.VoiceEndpoint).createNote(
                 session,
                 params['studentProfileId'],
                 params['transcription'],
@@ -2882,7 +3246,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['voice'] as _i10.VoiceEndpoint).getNote(
+              ) async => (endpoints['voice'] as _i12.VoiceEndpoint).getNote(
                 session,
                 params['id'],
               ),
@@ -2911,7 +3275,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['voice'] as _i10.VoiceEndpoint).getStudentNotes(
+                  (endpoints['voice'] as _i12.VoiceEndpoint).getStudentNotes(
                     session,
                     params['studentProfileId'],
                     category: params['category'],
@@ -2932,7 +3296,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['voice'] as _i10.VoiceEndpoint).getGoalNotes(
+                  (endpoints['voice'] as _i12.VoiceEndpoint).getGoalNotes(
                     session,
                     params['goalId'],
                   ),
@@ -2955,7 +3319,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['voice'] as _i10.VoiceEndpoint)
+              ) async => (endpoints['voice'] as _i12.VoiceEndpoint)
                   .getNotesBySentiment(
                     session,
                     params['studentProfileId'],
@@ -2981,7 +3345,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['voice'] as _i10.VoiceEndpoint).getNotesByCategory(
+                  (endpoints['voice'] as _i12.VoiceEndpoint).getNotesByCategory(
                     session,
                     params['studentProfileId'],
                     params['category'],
@@ -3005,7 +3369,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['voice'] as _i10.VoiceEndpoint).searchNotes(
+              ) async => (endpoints['voice'] as _i12.VoiceEndpoint).searchNotes(
                 session,
                 params['studentProfileId'],
                 params['searchQuery'],
@@ -3054,7 +3418,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['voice'] as _i10.VoiceEndpoint).updateNote(
+              ) async => (endpoints['voice'] as _i12.VoiceEndpoint).updateNote(
                 session,
                 params['id'],
                 params['transcription'],
@@ -3078,7 +3442,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['voice'] as _i10.VoiceEndpoint).deleteNote(
+              ) async => (endpoints['voice'] as _i12.VoiceEndpoint).deleteNote(
                 session,
                 params['id'],
               ),
@@ -3097,7 +3461,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['voice'] as _i10.VoiceEndpoint).getNoteStats(
+                  (endpoints['voice'] as _i12.VoiceEndpoint).getNoteStats(
                     session,
                     params['studentProfileId'],
                   ),
@@ -3121,7 +3485,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['voice'] as _i10.VoiceEndpoint).getRecentCommands(
+                  (endpoints['voice'] as _i12.VoiceEndpoint).getRecentCommands(
                     session,
                     params['studentProfileId'],
                     limit: params['limit'],
@@ -3141,7 +3505,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['voice'] as _i10.VoiceEndpoint).parseCommand(
+                  (endpoints['voice'] as _i12.VoiceEndpoint).parseCommand(
                     session,
                     params['transcription'],
                   ),
@@ -3159,7 +3523,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['voice'] as _i10.VoiceEndpoint)
+              ) async => (endpoints['voice'] as _i12.VoiceEndpoint)
                   .getSuggestedCommands(
                     session,
                     params['studentProfileId'],
@@ -3184,7 +3548,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['voice'] as _i10.VoiceEndpoint).bulkDeleteNotes(
+                  (endpoints['voice'] as _i12.VoiceEndpoint).bulkDeleteNotes(
                     session,
                     params['studentProfileId'],
                     params['noteIds'],
@@ -3203,7 +3567,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['voice'] as _i10.VoiceEndpoint).exportNotes(
+              ) async => (endpoints['voice'] as _i12.VoiceEndpoint).exportNotes(
                 session,
                 params['studentProfileId'],
               ),
@@ -3227,16 +3591,16 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['greeting'] as _i11.GreetingEndpoint).hello(
+              ) async => (endpoints['greeting'] as _i13.GreetingEndpoint).hello(
                 session,
                 params['name'],
               ),
         ),
       },
     );
-    modules['serverpod_auth_idp'] = _i12.Endpoints()
+    modules['serverpod_auth_idp'] = _i14.Endpoints()
       ..initializeEndpoints(server);
-    modules['serverpod_auth_core'] = _i13.Endpoints()
+    modules['serverpod_auth_core'] = _i15.Endpoints()
       ..initializeEndpoints(server);
   }
 }

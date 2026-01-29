@@ -1,0 +1,14 @@
+class: ActivityTracker
+table: activity_trackers
+fields:
+  userId: int
+  platform: String
+  username: String
+  lastSynced: DateTime?
+  activityData: String
+  isActive: bool, default=true
+indexes:
+  activity_tracker_user_idx:
+    fields: userId
+  activity_tracker_platform_idx:
+    fields: platform, userId

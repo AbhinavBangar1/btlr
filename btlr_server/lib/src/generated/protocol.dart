@@ -17,30 +17,40 @@ import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _i4;
 import 'academic_schedule.dart' as _i5;
-import 'behaviour_log.dart' as _i6;
-import 'daily_plan.dart' as _i7;
-import 'greetings/greeting.dart' as _i8;
-import 'learning_goal.dart' as _i9;
-import 'opportunity.dart' as _i10;
-import 'student_profile.dart' as _i11;
-import 'time_block.dart' as _i12;
-import 'voice_note.dart' as _i13;
-import 'package:btlr_server/src/generated/academic_schedule.dart' as _i14;
-import 'package:btlr_server/src/generated/behaviour_log.dart' as _i15;
-import 'package:btlr_server/src/generated/learning_goal.dart' as _i16;
-import 'package:btlr_server/src/generated/opportunity.dart' as _i17;
-import 'package:btlr_server/src/generated/daily_plan.dart' as _i18;
-import 'package:btlr_server/src/generated/time_block.dart' as _i19;
-import 'package:btlr_server/src/generated/student_profile.dart' as _i20;
-import 'package:btlr_server/src/generated/voice_note.dart' as _i21;
+import 'activity_tracker.dart' as _i6;
+import 'behaviour_log.dart' as _i7;
+import 'daily_plan.dart' as _i8;
+import 'greetings/greeting.dart' as _i9;
+import 'learning_goal.dart' as _i10;
+import 'opportunity.dart' as _i11;
+import 'scraped_content.dart' as _i12;
+import 'student_profile.dart' as _i13;
+import 'time_block.dart' as _i14;
+import 'user_scraping_preference.dart' as _i15;
+import 'voice_note.dart' as _i16;
+import 'package:btlr_server/src/generated/academic_schedule.dart' as _i17;
+import 'package:btlr_server/src/generated/activity_tracker.dart' as _i18;
+import 'package:btlr_server/src/generated/behaviour_log.dart' as _i19;
+import 'package:btlr_server/src/generated/learning_goal.dart' as _i20;
+import 'package:btlr_server/src/generated/opportunity.dart' as _i21;
+import 'package:btlr_server/src/generated/daily_plan.dart' as _i22;
+import 'package:btlr_server/src/generated/time_block.dart' as _i23;
+import 'package:btlr_server/src/generated/user_scraping_preference.dart'
+    as _i24;
+import 'package:btlr_server/src/generated/scraped_content.dart' as _i25;
+import 'package:btlr_server/src/generated/student_profile.dart' as _i26;
+import 'package:btlr_server/src/generated/voice_note.dart' as _i27;
 export 'academic_schedule.dart';
+export 'activity_tracker.dart';
 export 'behaviour_log.dart';
 export 'daily_plan.dart';
 export 'greetings/greeting.dart';
 export 'learning_goal.dart';
 export 'opportunity.dart';
+export 'scraped_content.dart';
 export 'student_profile.dart';
 export 'time_block.dart';
+export 'user_scraping_preference.dart';
 export 'voice_note.dart';
 
 class Protocol extends _i1.SerializationManagerServer {
@@ -166,6 +176,105 @@ class Protocol extends _i1.SerializationManagerServer {
             _i2.IndexElementDefinition(
               type: _i2.IndexElementDefinitionType.column,
               definition: 'endTime',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _i2.TableDefinition(
+      name: 'activity_trackers',
+      dartName: 'ActivityTracker',
+      schema: 'public',
+      module: 'btlr',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'nextval(\'activity_trackers_id_seq\'::regclass)',
+        ),
+        _i2.ColumnDefinition(
+          name: 'userId',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _i2.ColumnDefinition(
+          name: 'platform',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'username',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'lastSynced',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'activityData',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'isActive',
+          columnType: _i2.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'true',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'activity_trackers_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'activity_tracker_user_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'userId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'activity_tracker_platform_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'platform',
+            ),
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'userId',
             ),
           ],
           type: 'btree',
@@ -722,6 +831,108 @@ class Protocol extends _i1.SerializationManagerServer {
       managed: true,
     ),
     _i2.TableDefinition(
+      name: 'scraped_contents',
+      dartName: 'ScrapedContent',
+      schema: 'public',
+      module: 'btlr',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault: 'nextval(\'scraped_contents_id_seq\'::regclass)',
+        ),
+        _i2.ColumnDefinition(
+          name: 'userId',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _i2.ColumnDefinition(
+          name: 'platform',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'title',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'summary',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'sourceUrl',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'scrapedAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+          columnDefault: 'CURRENT_TIMESTAMP',
+        ),
+        _i2.ColumnDefinition(
+          name: 'isRead',
+          columnType: _i2.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'false',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'scraped_contents_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'scraped_contents_user_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'userId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'scraped_contents_platform_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'platform',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _i2.TableDefinition(
       name: 'student_profile',
       dartName: 'StudentProfile',
       schema: 'public',
@@ -1019,6 +1230,101 @@ class Protocol extends _i1.SerializationManagerServer {
       managed: true,
     ),
     _i2.TableDefinition(
+      name: 'user_scraping_preferences',
+      dartName: 'UserScrapingPreference',
+      schema: 'public',
+      module: 'btlr',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int?',
+          columnDefault:
+              'nextval(\'user_scraping_preferences_id_seq\'::regclass)',
+        ),
+        _i2.ColumnDefinition(
+          name: 'userId',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _i2.ColumnDefinition(
+          name: 'platform',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'customUrl',
+          columnType: _i2.ColumnType.text,
+          isNullable: true,
+          dartType: 'String?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'isActive',
+          columnType: _i2.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+          columnDefault: 'true',
+        ),
+        _i2.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+          columnDefault: 'CURRENT_TIMESTAMP',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'user_scraping_preferences_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'user_scraping_user_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'userId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'user_scraping_platform_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'platform',
+            ),
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'userId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _i2.TableDefinition(
       name: 'voice_note',
       dartName: 'VoiceNote',
       schema: 'public',
@@ -1185,66 +1491,85 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i5.AcademicSchedule) {
       return _i5.AcademicSchedule.fromJson(data) as T;
     }
-    if (t == _i6.BehaviorLog) {
-      return _i6.BehaviorLog.fromJson(data) as T;
+    if (t == _i6.ActivityTracker) {
+      return _i6.ActivityTracker.fromJson(data) as T;
     }
-    if (t == _i7.DailyPlan) {
-      return _i7.DailyPlan.fromJson(data) as T;
+    if (t == _i7.BehaviorLog) {
+      return _i7.BehaviorLog.fromJson(data) as T;
     }
-    if (t == _i8.Greeting) {
-      return _i8.Greeting.fromJson(data) as T;
+    if (t == _i8.DailyPlan) {
+      return _i8.DailyPlan.fromJson(data) as T;
     }
-    if (t == _i9.LearningGoal) {
-      return _i9.LearningGoal.fromJson(data) as T;
+    if (t == _i9.Greeting) {
+      return _i9.Greeting.fromJson(data) as T;
     }
-    if (t == _i10.Opportunity) {
-      return _i10.Opportunity.fromJson(data) as T;
+    if (t == _i10.LearningGoal) {
+      return _i10.LearningGoal.fromJson(data) as T;
     }
-    if (t == _i11.StudentProfile) {
-      return _i11.StudentProfile.fromJson(data) as T;
+    if (t == _i11.Opportunity) {
+      return _i11.Opportunity.fromJson(data) as T;
     }
-    if (t == _i12.TimeBlock) {
-      return _i12.TimeBlock.fromJson(data) as T;
+    if (t == _i12.ScrapedContent) {
+      return _i12.ScrapedContent.fromJson(data) as T;
     }
-    if (t == _i13.VoiceNote) {
-      return _i13.VoiceNote.fromJson(data) as T;
+    if (t == _i13.StudentProfile) {
+      return _i13.StudentProfile.fromJson(data) as T;
+    }
+    if (t == _i14.TimeBlock) {
+      return _i14.TimeBlock.fromJson(data) as T;
+    }
+    if (t == _i15.UserScrapingPreference) {
+      return _i15.UserScrapingPreference.fromJson(data) as T;
+    }
+    if (t == _i16.VoiceNote) {
+      return _i16.VoiceNote.fromJson(data) as T;
     }
     if (t == _i1.getType<_i5.AcademicSchedule?>()) {
       return (data != null ? _i5.AcademicSchedule.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i6.BehaviorLog?>()) {
-      return (data != null ? _i6.BehaviorLog.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i6.ActivityTracker?>()) {
+      return (data != null ? _i6.ActivityTracker.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i7.DailyPlan?>()) {
-      return (data != null ? _i7.DailyPlan.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i7.BehaviorLog?>()) {
+      return (data != null ? _i7.BehaviorLog.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i8.Greeting?>()) {
-      return (data != null ? _i8.Greeting.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i8.DailyPlan?>()) {
+      return (data != null ? _i8.DailyPlan.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i9.LearningGoal?>()) {
-      return (data != null ? _i9.LearningGoal.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i9.Greeting?>()) {
+      return (data != null ? _i9.Greeting.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i10.Opportunity?>()) {
-      return (data != null ? _i10.Opportunity.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i10.LearningGoal?>()) {
+      return (data != null ? _i10.LearningGoal.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i11.StudentProfile?>()) {
-      return (data != null ? _i11.StudentProfile.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i11.Opportunity?>()) {
+      return (data != null ? _i11.Opportunity.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i12.TimeBlock?>()) {
-      return (data != null ? _i12.TimeBlock.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i12.ScrapedContent?>()) {
+      return (data != null ? _i12.ScrapedContent.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i13.VoiceNote?>()) {
-      return (data != null ? _i13.VoiceNote.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i13.StudentProfile?>()) {
+      return (data != null ? _i13.StudentProfile.fromJson(data) : null) as T;
     }
-    if (t == List<_i14.AcademicSchedule>) {
+    if (t == _i1.getType<_i14.TimeBlock?>()) {
+      return (data != null ? _i14.TimeBlock.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i15.UserScrapingPreference?>()) {
+      return (data != null ? _i15.UserScrapingPreference.fromJson(data) : null)
+          as T;
+    }
+    if (t == _i1.getType<_i16.VoiceNote?>()) {
+      return (data != null ? _i16.VoiceNote.fromJson(data) : null) as T;
+    }
+    if (t == List<_i17.AcademicSchedule>) {
       return (data as List)
-              .map((e) => deserialize<_i14.AcademicSchedule>(e))
+              .map((e) => deserialize<_i17.AcademicSchedule>(e))
               .toList()
           as T;
     }
-    if (t == List<_i15.BehaviorLog>) {
+    if (t == List<_i18.ActivityTracker>) {
       return (data as List)
-              .map((e) => deserialize<_i15.BehaviorLog>(e))
+              .map((e) => deserialize<_i18.ActivityTracker>(e))
               .toList()
           as T;
     }
@@ -1254,43 +1579,70 @@ class Protocol extends _i1.SerializationManagerServer {
           )
           as T;
     }
+    if (t == _i1.getType<Map<String, dynamic>?>()) {
+      return (data != null
+              ? (data as Map).map(
+                  (k, v) =>
+                      MapEntry(deserialize<String>(k), deserialize<dynamic>(v)),
+                )
+              : null)
+          as T;
+    }
+    if (t == List<_i19.BehaviorLog>) {
+      return (data as List)
+              .map((e) => deserialize<_i19.BehaviorLog>(e))
+              .toList()
+          as T;
+    }
     if (t == List<Map<String, dynamic>>) {
       return (data as List)
               .map((e) => deserialize<Map<String, dynamic>>(e))
               .toList()
           as T;
     }
-    if (t == List<_i16.LearningGoal>) {
+    if (t == List<_i20.LearningGoal>) {
       return (data as List)
-              .map((e) => deserialize<_i16.LearningGoal>(e))
+              .map((e) => deserialize<_i20.LearningGoal>(e))
               .toList()
           as T;
     }
-    if (t == List<_i17.Opportunity>) {
+    if (t == List<_i21.Opportunity>) {
       return (data as List)
-              .map((e) => deserialize<_i17.Opportunity>(e))
+              .map((e) => deserialize<_i21.Opportunity>(e))
               .toList()
           as T;
     }
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
     }
-    if (t == List<_i18.DailyPlan>) {
-      return (data as List).map((e) => deserialize<_i18.DailyPlan>(e)).toList()
+    if (t == List<_i22.DailyPlan>) {
+      return (data as List).map((e) => deserialize<_i22.DailyPlan>(e)).toList()
           as T;
     }
-    if (t == List<_i19.TimeBlock>) {
-      return (data as List).map((e) => deserialize<_i19.TimeBlock>(e)).toList()
+    if (t == List<_i23.TimeBlock>) {
+      return (data as List).map((e) => deserialize<_i23.TimeBlock>(e)).toList()
           as T;
     }
-    if (t == List<_i20.StudentProfile>) {
+    if (t == List<_i24.UserScrapingPreference>) {
       return (data as List)
-              .map((e) => deserialize<_i20.StudentProfile>(e))
+              .map((e) => deserialize<_i24.UserScrapingPreference>(e))
               .toList()
           as T;
     }
-    if (t == List<_i21.VoiceNote>) {
-      return (data as List).map((e) => deserialize<_i21.VoiceNote>(e)).toList()
+    if (t == List<_i25.ScrapedContent>) {
+      return (data as List)
+              .map((e) => deserialize<_i25.ScrapedContent>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i26.StudentProfile>) {
+      return (data as List)
+              .map((e) => deserialize<_i26.StudentProfile>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i27.VoiceNote>) {
+      return (data as List).map((e) => deserialize<_i27.VoiceNote>(e)).toList()
           as T;
     }
     if (t == List<int>) {
@@ -1311,14 +1663,17 @@ class Protocol extends _i1.SerializationManagerServer {
   static String? getClassNameForType(Type type) {
     return switch (type) {
       _i5.AcademicSchedule => 'AcademicSchedule',
-      _i6.BehaviorLog => 'BehaviorLog',
-      _i7.DailyPlan => 'DailyPlan',
-      _i8.Greeting => 'Greeting',
-      _i9.LearningGoal => 'LearningGoal',
-      _i10.Opportunity => 'Opportunity',
-      _i11.StudentProfile => 'StudentProfile',
-      _i12.TimeBlock => 'TimeBlock',
-      _i13.VoiceNote => 'VoiceNote',
+      _i6.ActivityTracker => 'ActivityTracker',
+      _i7.BehaviorLog => 'BehaviorLog',
+      _i8.DailyPlan => 'DailyPlan',
+      _i9.Greeting => 'Greeting',
+      _i10.LearningGoal => 'LearningGoal',
+      _i11.Opportunity => 'Opportunity',
+      _i12.ScrapedContent => 'ScrapedContent',
+      _i13.StudentProfile => 'StudentProfile',
+      _i14.TimeBlock => 'TimeBlock',
+      _i15.UserScrapingPreference => 'UserScrapingPreference',
+      _i16.VoiceNote => 'VoiceNote',
       _ => null,
     };
   }
@@ -1335,21 +1690,27 @@ class Protocol extends _i1.SerializationManagerServer {
     switch (data) {
       case _i5.AcademicSchedule():
         return 'AcademicSchedule';
-      case _i6.BehaviorLog():
+      case _i6.ActivityTracker():
+        return 'ActivityTracker';
+      case _i7.BehaviorLog():
         return 'BehaviorLog';
-      case _i7.DailyPlan():
+      case _i8.DailyPlan():
         return 'DailyPlan';
-      case _i8.Greeting():
+      case _i9.Greeting():
         return 'Greeting';
-      case _i9.LearningGoal():
+      case _i10.LearningGoal():
         return 'LearningGoal';
-      case _i10.Opportunity():
+      case _i11.Opportunity():
         return 'Opportunity';
-      case _i11.StudentProfile():
+      case _i12.ScrapedContent():
+        return 'ScrapedContent';
+      case _i13.StudentProfile():
         return 'StudentProfile';
-      case _i12.TimeBlock():
+      case _i14.TimeBlock():
         return 'TimeBlock';
-      case _i13.VoiceNote():
+      case _i15.UserScrapingPreference():
+        return 'UserScrapingPreference';
+      case _i16.VoiceNote():
         return 'VoiceNote';
     }
     className = _i2.Protocol().getClassNameForObject(data);
@@ -1376,29 +1737,38 @@ class Protocol extends _i1.SerializationManagerServer {
     if (dataClassName == 'AcademicSchedule') {
       return deserialize<_i5.AcademicSchedule>(data['data']);
     }
+    if (dataClassName == 'ActivityTracker') {
+      return deserialize<_i6.ActivityTracker>(data['data']);
+    }
     if (dataClassName == 'BehaviorLog') {
-      return deserialize<_i6.BehaviorLog>(data['data']);
+      return deserialize<_i7.BehaviorLog>(data['data']);
     }
     if (dataClassName == 'DailyPlan') {
-      return deserialize<_i7.DailyPlan>(data['data']);
+      return deserialize<_i8.DailyPlan>(data['data']);
     }
     if (dataClassName == 'Greeting') {
-      return deserialize<_i8.Greeting>(data['data']);
+      return deserialize<_i9.Greeting>(data['data']);
     }
     if (dataClassName == 'LearningGoal') {
-      return deserialize<_i9.LearningGoal>(data['data']);
+      return deserialize<_i10.LearningGoal>(data['data']);
     }
     if (dataClassName == 'Opportunity') {
-      return deserialize<_i10.Opportunity>(data['data']);
+      return deserialize<_i11.Opportunity>(data['data']);
+    }
+    if (dataClassName == 'ScrapedContent') {
+      return deserialize<_i12.ScrapedContent>(data['data']);
     }
     if (dataClassName == 'StudentProfile') {
-      return deserialize<_i11.StudentProfile>(data['data']);
+      return deserialize<_i13.StudentProfile>(data['data']);
     }
     if (dataClassName == 'TimeBlock') {
-      return deserialize<_i12.TimeBlock>(data['data']);
+      return deserialize<_i14.TimeBlock>(data['data']);
+    }
+    if (dataClassName == 'UserScrapingPreference') {
+      return deserialize<_i15.UserScrapingPreference>(data['data']);
     }
     if (dataClassName == 'VoiceNote') {
-      return deserialize<_i13.VoiceNote>(data['data']);
+      return deserialize<_i16.VoiceNote>(data['data']);
     }
     if (dataClassName.startsWith('serverpod.')) {
       data['className'] = dataClassName.substring(10);
@@ -1438,20 +1808,26 @@ class Protocol extends _i1.SerializationManagerServer {
     switch (t) {
       case _i5.AcademicSchedule:
         return _i5.AcademicSchedule.t;
-      case _i6.BehaviorLog:
-        return _i6.BehaviorLog.t;
-      case _i7.DailyPlan:
-        return _i7.DailyPlan.t;
-      case _i9.LearningGoal:
-        return _i9.LearningGoal.t;
-      case _i10.Opportunity:
-        return _i10.Opportunity.t;
-      case _i11.StudentProfile:
-        return _i11.StudentProfile.t;
-      case _i12.TimeBlock:
-        return _i12.TimeBlock.t;
-      case _i13.VoiceNote:
-        return _i13.VoiceNote.t;
+      case _i6.ActivityTracker:
+        return _i6.ActivityTracker.t;
+      case _i7.BehaviorLog:
+        return _i7.BehaviorLog.t;
+      case _i8.DailyPlan:
+        return _i8.DailyPlan.t;
+      case _i10.LearningGoal:
+        return _i10.LearningGoal.t;
+      case _i11.Opportunity:
+        return _i11.Opportunity.t;
+      case _i12.ScrapedContent:
+        return _i12.ScrapedContent.t;
+      case _i13.StudentProfile:
+        return _i13.StudentProfile.t;
+      case _i14.TimeBlock:
+        return _i14.TimeBlock.t;
+      case _i15.UserScrapingPreference:
+        return _i15.UserScrapingPreference.t;
+      case _i16.VoiceNote:
+        return _i16.VoiceNote.t;
     }
     return null;
   }

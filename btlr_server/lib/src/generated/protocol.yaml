@@ -20,6 +20,14 @@ academic:
   - restoreSchedule:
   - getUpcomingClasses:
   - getTodaysSchedule:
+activity:
+  - setupActivityTracker:
+  - getUserActivityTrackers:
+  - syncAllActivities:
+  - syncPlatformActivity:
+  - getActivityData:
+  - deleteActivityTracker:
+  - getDashboard:
 behavior:
   - logCompletion:
   - logMiss:
@@ -93,6 +101,14 @@ plan:
   - getCurrentBlock:
   - getBlocksByStatus:
   - getPlanStats:
+scraping:
+  - addCustomScrapingUrl:
+  - getUserScrapingPreferences:
+  - scrapeAllPlatforms:
+  - scrapePlatform:
+  - getScrapedContent:
+  - markAsRead:
+  - deleteOldContent:
 student:
   - createProfile:
   - getProfile:

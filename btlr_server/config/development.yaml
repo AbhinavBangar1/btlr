@@ -63,3 +63,12 @@ sessionLogs:
 #futureCall:
 #  concurrencyLimit: 1 # Defaults to 1, a negative or null value removes the limit
 #  scanInterval: 5000 # Unit in milliseconds, defaults to 5000
+
+# config/development.yaml
+network:
+  allowedDomains:
+    - devpost.com
+    - internshala.com
+    - angel.co
+    - leetcode.com
+    - api.github.com

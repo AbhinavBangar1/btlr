@@ -92,6 +92,25 @@ final todaysBlocksProvider = FutureProvider<List<TimeBlock>>((ref) async {
   );
 });
 
+final weeklyBlocksProvider = FutureProvider<List<TimeBlock>>((ref) async {
+  final studentId = ref.watch(currentStudentIdProvider);
+  if (studentId == null) return [];
+
+  final endpoint = ref.read(planEndpointProvider);
+
+  final blocks = await endpoint.getUpcomingBlocks(studentId);
+
+  final now = DateTime.now();
+  final weekStart = now.subtract(Duration(days: now.weekday - 1));
+  final weekEnd = weekStart.add(const Duration(days: 7));
+
+  // Filter only this week's blocks
+  return blocks.where((b) =>
+    b.startTime.isAfter(weekStart) &&
+    b.startTime.isBefore(weekEnd)
+  ).toList();
+});
+
 /// Current time block (what should be happening now)
 final currentBlockProvider = FutureProvider<TimeBlock?>((ref) async {
   final studentId = ref.watch(currentStudentIdProvider);
