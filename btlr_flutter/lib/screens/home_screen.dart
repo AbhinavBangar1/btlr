@@ -25,7 +25,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   static const List<Widget> _screens = [
     DashboardScreen(),
     GoalsScreen(),
-    WeekScheduleScreen(),
+    ScheduleScreen(),
     DiscoverScreen(),
     SettingsScreen(),
   ];
