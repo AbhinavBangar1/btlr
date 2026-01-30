@@ -65,6 +65,7 @@ import '../providers/api_client_provider.dart';
 import 'home_screen.dart';
 import 'login_screen.dart';
 import 'schedule_onboarding_screen.dart';
+import 'main_layout.dart';
 
 class AuthGuardScreen extends ConsumerWidget {
   const AuthGuardScreen({super.key});
@@ -102,9 +103,8 @@ class AuthGuardScreen extends ConsumerWidget {
 
         // --- 3. AUTHENTICATED & READY ---
         // Both conditions met: User is logged in AND onboarding is done.
-        return const HomeScreen();
+        return const MainLayout();
       },
-
       // --- LOADING STATE ---
       // This prevents the white screen by showing a branded loader
       // while the server validates the session token.
