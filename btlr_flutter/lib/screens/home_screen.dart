@@ -1,3 +1,4 @@
+import 'package:btlr_flutter/screens/week_schedule_screen.dart';
 import 'package:flutter/material.dart';
 import 'dashboard_screen.dart';
 import 'goals_screen.dart';
@@ -24,7 +25,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   static const List<Widget> _screens = [
     DashboardScreen(),
     GoalsScreen(),
-    ScheduleScreen(),
+    WeekScheduleScreen(),
     DiscoverScreen(),
     SettingsScreen(),
   ];

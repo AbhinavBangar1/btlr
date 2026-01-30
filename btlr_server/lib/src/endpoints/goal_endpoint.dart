@@ -332,4 +332,55 @@ class GoalEndpoint extends Endpoint {
       orderDescending: true,
     );
   }
+  /// Get goal completion percentage
+Future<double> getGoalProgress(Session session, int goalId) async {
+  final goal = await LearningGoal.db.findById(session, goalId);
+  if (goal == null) return 0.0;
+
+  final estimated = goal.estimatedHours ?? 0.0;
+  final actual = goal.actualHours ?? 0.0;
+
+  if (estimated == 0) return 0.0;
+  return (actual / estimated).clamp(0.0, 1.0);
+}
+
+/// Get goals at risk (deadline approaching, low progress)
+Future<List<Map<String, dynamic>>> getGoalsAtRisk(
+  Session session,
+  int studentProfileId,
+) async {
+  final goals = await LearningGoal.db.find(
+    session,
+    where: (t) =>
+        t.studentProfileId.equals(studentProfileId) &
+        t.status.equals('active'),
+  );
+
+  final atRisk = <Map<String, dynamic>>[];
+  final now = DateTime.now();
+
+  for (final goal in goals) {
+    if (goal.deadline == null) continue;
+
+    final daysLeft = goal.deadline!.difference(now).inDays;
+    final progress = await getGoalProgress(session, goal.id!);
+    final estimatedHours = goal.estimatedHours ?? 0.0;
+    final actualHours = goal.actualHours ?? 0.0;
+    final remaining = estimatedHours - actualHours;
+
+    // At risk if: less than 3 days left AND less than 50% complete
+    if (daysLeft <= 3 && progress < 0.5 && remaining > 0) {
+      atRisk.add({
+        'goal': goal,
+        'daysLeft': daysLeft,
+        'progress': progress,
+        'remainingHours': remaining,
+      });
+    }
+  }
+
+  return atRisk;
+}
+
+
 }

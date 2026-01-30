@@ -903,6 +903,22 @@ class EndpointGoal extends _i2.EndpointRef {
       'priority': priority,
     },
   );
+
+  /// Get goal completion percentage
+  _i3.Future<double> getGoalProgress(int goalId) =>
+      caller.callServerEndpoint<double>(
+        'goal',
+        'getGoalProgress',
+        {'goalId': goalId},
+      );
+
+  /// Get goals at risk (deadline approaching, low progress)
+  _i3.Future<List<Map<String, dynamic>>> getGoalsAtRisk(int studentProfileId) =>
+      caller.callServerEndpoint<List<Map<String, dynamic>>>(
+        'goal',
+        'getGoalsAtRisk',
+        {'studentProfileId': studentProfileId},
+      );
 }
 
 /// Endpoint for managing opportunities (internships, hackathons, scholarships)
@@ -1252,7 +1268,7 @@ class EndpointPlan extends _i2.EndpointRef {
         {'id': id},
       );
 
-  /// Get time blocks for a date range
+  /// Get time blocks for a date range (FOR WEEKLY CALENDAR VIEW)
   _i3.Future<List<_i11.TimeBlock>> getBlocksInRange(
     int studentProfileId,
     DateTime startDate,

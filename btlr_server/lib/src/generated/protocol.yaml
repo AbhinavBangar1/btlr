@@ -61,6 +61,8 @@ goal:
   - getOverdueGoals:
   - getGoalStats:
   - getGoalsByPriority:
+  - getGoalProgress:
+  - getGoalsAtRisk:
 opportunity:
   - createOpportunity:
   - getOpportunity:

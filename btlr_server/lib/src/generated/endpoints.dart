@@ -1699,6 +1699,43 @@ class Endpoints extends _i1.EndpointDispatch {
                     params['priority'],
                   ),
         ),
+        'getGoalProgress': _i1.MethodConnector(
+          name: 'getGoalProgress',
+          params: {
+            'goalId': _i1.ParameterDescription(
+              name: 'goalId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['goal'] as _i7.GoalEndpoint).getGoalProgress(
+                    session,
+                    params['goalId'],
+                  ),
+        ),
+        'getGoalsAtRisk': _i1.MethodConnector(
+          name: 'getGoalsAtRisk',
+          params: {
+            'studentProfileId': _i1.ParameterDescription(
+              name: 'studentProfileId',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['goal'] as _i7.GoalEndpoint).getGoalsAtRisk(
+                session,
+                params['studentProfileId'],
+              ),
+        ),
       },
     );
     connectors['opportunity'] = _i1.EndpointConnector(

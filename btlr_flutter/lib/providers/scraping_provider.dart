@@ -156,7 +156,7 @@ import 'student_provider.dart';
 final scrapedContentProvider = StateNotifierProvider<ScrapedContentNotifier, AsyncValue<List<ScrapedContent>>>((ref) {
   final notifier = ScrapedContentNotifier(ref);
   // Auto-initialize when provider is created
-  // Future.microtask(() => notifier.init());
+  Future.microtask(() => notifier.init());
   return notifier;
 });
 
