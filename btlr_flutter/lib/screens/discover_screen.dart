@@ -2331,7 +2331,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> with SingleTick
             letterSpacing: 1.5,
           ),
           tabs: [
-            const Tab(text: 'OPPORTUNITIES'),
+            const Tab(text: 'MY INTERESTS'),
             Tab(
               child: Row(
                 mainAxisSize: MainAxisSize.min,

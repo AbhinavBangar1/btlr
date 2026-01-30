@@ -18,8 +18,10 @@ class GoalsScreen extends ConsumerStatefulWidget {
 }
 
 class _GoalsScreenState extends ConsumerState<GoalsScreen> {
-  String _selectedFilter = 'all';
 
+  String _selectedFilter = 'all'; // Status filter (Active, Completed)
+  String _selectedPriority = 'all'; // Priority filter (High, Medium, Low)
+  String _selectedUrgency = 'all'; // Urgency filter (Overdue, Due Soon)
   @override
   Widget build(BuildContext context) {
     final goalsAsync = ref.watch(goalsProvider);
@@ -92,35 +94,75 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
             ),
           ),
 
+          // INSERT THIS NEW BLOCK:
           _StaggeredEntrance(
             delayIndex: 1,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-              child: Row(
-                children: [
-                  _FilterChip(
-                    label: 'ALL',
-                    isSelected: _selectedFilter == 'all',
-                    onTap: () => setState(() => _selectedFilter = 'all'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Row 1: The original status chips
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                  child: Row(
+                    children: [
+                      _FilterChip(
+                        label: 'ALL',
+                        isSelected: _selectedFilter == 'all',
+                        onTap: () => setState(() => _selectedFilter = 'all'),
+                      ),
+                      const SizedBox(width: 8),
+                      _FilterChip(
+                        label: 'ACTIVE',
+                        isSelected: _selectedFilter == 'active',
+                        onTap: () => setState(() => _selectedFilter = 'active'),
+                      ),
+                      const SizedBox(width: 8),
+                      _FilterChip(
+                        label: 'COMPLETED',
+                        isSelected: _selectedFilter == 'completed',
+                        onTap: () => setState(() => _selectedFilter = 'completed'),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  _FilterChip(
-                    label: 'ACTIVE',
-                    isSelected: _selectedFilter == 'active',
-                    onTap: () => setState(() => _selectedFilter = 'active'),
+                ),
+
+                // Row 2: The brand new Priority and Urgency menus
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                  child: Row(
+                    children: [
+                      _SmallMenuFilter(
+                        label: 'PRIORITY',
+                        currentValue: _selectedPriority,
+                        items: const ['all', 'high', 'medium', 'low'],
+                        onChanged: (val) => setState(() => _selectedPriority = val),
+                      ),
+                      const SizedBox(width: 8),
+                      _SmallMenuFilter(
+                        label: 'URGENCY',
+                        currentValue: _selectedUrgency,
+                        items: const ['all', 'soon', 'overdue'],
+                        onChanged: (val) => setState(() => _selectedUrgency = val),
+                      ),
+                      if (_selectedPriority != 'all' || _selectedUrgency != 'all')
+                        TextButton(
+                          onPressed: () => setState(() {
+                            _selectedPriority = 'all';
+                            _selectedUrgency = 'all';
+                          }),
+                          child: const Text(
+                              'RESET',
+                              style: TextStyle(fontSize: 10, color: Colors.redAccent, fontWeight: FontWeight.bold)
+                          ),
+                        ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  _FilterChip(
-                    label: 'COMPLETED',
-                    isSelected: _selectedFilter == 'completed',
-                    onTap: () => setState(() => _selectedFilter = 'completed'),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-
           const SizedBox(height: 16),
 
           Expanded(
@@ -161,16 +203,40 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
       ),
     );
   }
-
   List<dynamic> _filterGoals(List<dynamic> goals) {
-    switch (_selectedFilter) {
-      case 'active':
-        return goals.where((g) => g.status == 'in_progress' || g.status == 'not_started').toList();
-      case 'completed':
-        return goals.where((g) => g.status == 'completed').toList();
-      default:
-        return goals;
-    }
+    return goals.where((goal) {
+      // 1. Status Filter
+      bool matchesStatus = true;
+      if (_selectedFilter == 'active') {
+        matchesStatus = goal.status == 'in_progress' || goal.status == 'not_started';
+      } else if (_selectedFilter == 'completed') {
+        matchesStatus = goal.status == 'completed';
+      }
+
+      // 2. Priority Filter (Safe check)
+      bool matchesPriority = true;
+      if (_selectedPriority != 'all') {
+        // Use ?? '' to prevent null errors if a goal has no priority set
+        matchesPriority = (goal.priority ?? '') == _selectedPriority;
+      }
+
+      // 3. Urgency Filter (Safe check)
+      bool matchesUrgency = true;
+      if (_selectedUrgency != 'all') {
+        if (goal.deadline == null) {
+          matchesUrgency = false;
+        } else {
+          final daysUntil = goal.deadline.difference(DateTime.now()).inDays;
+          if (_selectedUrgency == 'overdue') {
+            matchesUrgency = daysUntil < 0;
+          } else if (_selectedUrgency == 'soon') {
+            matchesUrgency = daysUntil >= 0 && daysUntil <= 3;
+          }
+        }
+      }
+
+      return matchesStatus && matchesPriority && matchesUrgency;
+    }).toList();
   }
 
   void _showAddGoalDialog(BuildContext context) {
@@ -1172,4 +1238,53 @@ class _EmptyGoalsState extends StatelessWidget {
           ]
       )
   );
+}
+
+class _SmallMenuFilter extends StatelessWidget {
+  final String label;
+  final String currentValue;
+  final List<String> items;
+  final Function(String) onChanged;
+
+  const _SmallMenuFilter({
+    required this.label,
+    required this.currentValue,
+    required this.items,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isActive = currentValue != 'all';
+
+    return PopupMenuButton<String>(
+      onSelected: onChanged,
+      offset: const Offset(0, 40),
+      itemBuilder: (context) => items.map((item) => PopupMenuItem(
+        value: item,
+        child: Text(item.toUpperCase(), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: kPrimaryBlue)),
+      )).toList(),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isActive ? kPrimaryBlue.withOpacity(0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: isActive ? kPrimaryBlue : kPrimaryBlue.withOpacity(0.2)),
+        ),
+        child: Row(
+          children: [
+            Text(
+              "$label: ${currentValue.toUpperCase()}",
+              style: TextStyle(
+                color: kPrimaryBlue,
+                fontSize: 10,
+                fontWeight: isActive ? FontWeight.w900 : FontWeight.w600,
+              ),
+            ),
+            const Icon(Icons.arrow_drop_down, size: 16, color: kPrimaryBlue),
+          ],
+        ),
+      ),
+    );
+  }
 }

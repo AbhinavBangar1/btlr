@@ -9,6 +9,7 @@ import 'goals_screen.dart';
 import 'schedule_screen.dart';
 import 'discover_screen.dart';
 import 'settings_screen.dart';
+import 'schedule_view_wrapper.dart';
 
 const Color kPrimaryBlue = Color(0xFF274B7F);
 
@@ -37,7 +38,8 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
     final Map<SidebarTab, Widget> _screens = {
       SidebarTab.home: const DashboardScreen(),
       SidebarTab.goals: const GoalsScreen(),
-      SidebarTab.schedule: const ScheduleScreen(),
+      // CHANGE THIS LINE:
+      SidebarTab.schedule: const ScheduleViewWrapper(),
       SidebarTab.opportunities: const DiscoverScreen(),
       SidebarTab.settings: const SettingsScreen(),
     };

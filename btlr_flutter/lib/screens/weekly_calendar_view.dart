@@ -3,10 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/plan_provider.dart';
 import '../providers/ui_state_provider.dart';
 
-const _rowHeight = 150.0;      // height per hour (bigger)
-const _colWidth = 250.0;      // width per day (bigger)
-const _startHour = 0;         // 12 am
-const _endHour = 23;          // 11 pm
+const Color kPrimaryBlue = Color(0xFF274B7F);
+const Color kAccentBlue = Color(0xFFE8F0FE);
+
+// Refined dimensions for a desktop-with-sidebar layout
+const _rowHeight = 100.0;      // Slightly shorter for better vertical context
+const _colWidth = 180.0;       // Narrower so more days fit on screen
+const _startHour = 0;          // 12 am
+const _endHour = 23;           // 11 pm
 
 class WeeklyCalendarView extends ConsumerStatefulWidget {
   const WeeklyCalendarView({super.key});
@@ -18,7 +22,7 @@ class WeeklyCalendarView extends ConsumerStatefulWidget {
 class _WeeklyCalendarViewState extends ConsumerState<WeeklyCalendarView> {
   late ScrollController _horizontalScrollController;
   late ScrollController _verticalScrollController;
-  
+
   DateTime _weekStart = _normalizeDate(
     DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1)),
   );
@@ -80,11 +84,11 @@ class _WeeklyCalendarViewState extends ConsumerState<WeeklyCalendarView> {
     final weekDays = _getWeekDays();
     final startDate = weekDays.first;
     final endDate = weekDays.last;
-    
+
     final weeklyBlocksAsync = ref.watch(
       weeklyBlocksProvider((startDate: startDate, endDate: endDate)),
     );
-    
+
     final isCalendarView = ref.watch(viewModeProvider);
 
     return Scaffold(
@@ -270,7 +274,7 @@ Widget _buildCalendarGrid(List<DateTime> weekDays, List<dynamic> blocks) {
       children: [
         // ✅ Time column (scrolls with content)
         _buildTimeColumn(totalHours),
-        
+
         // ✅ Scrollable grid (horizontal only)
         Expanded(
           child: SingleChildScrollView(
