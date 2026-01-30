@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/plan_provider.dart';
 import '../providers/ui_state_provider.dart';
 
-const _rowHeight = 80.0;      // height per hour (bigger)
-const _colWidth = 120.0;      // width per day (bigger)
+const _rowHeight = 150.0;      // height per hour (bigger)
+const _colWidth = 250.0;      // width per day (bigger)
 const _startHour = 0;         // 12 am
 const _endHour = 23;          // 11 pm
 
@@ -260,12 +260,18 @@ class _WeeklyCalendarViewState extends ConsumerState<WeeklyCalendarView> {
     );
   }
 
-  Widget _buildCalendarGrid(List<DateTime> weekDays, List<dynamic> blocks) {
-    final totalHours = _endHour - _startHour + 1;
+Widget _buildCalendarGrid(List<DateTime> weekDays, List<dynamic> blocks) {
+  final totalHours = _endHour - _startHour + 1;
 
-    return Row(
+  return SingleChildScrollView(
+    controller: _verticalScrollController,
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // ✅ Time column (scrolls with content)
         _buildTimeColumn(totalHours),
+        
+        // ✅ Scrollable grid (horizontal only)
         Expanded(
           child: SingleChildScrollView(
             controller: _horizontalScrollController,
@@ -275,135 +281,136 @@ class _WeeklyCalendarViewState extends ConsumerState<WeeklyCalendarView> {
               child: Column(
                 children: [
                   _buildDayHeaders(weekDays),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      controller: _verticalScrollController,
-                      child: _buildTimeGrid(weekDays, blocks, totalHours),
-                    ),
-                  ),
+                  _buildTimeGrid(weekDays, blocks, totalHours),
                 ],
               ),
             ),
           ),
         ),
       ],
-    );
-  }
+    ),
+  );
+}
 
-  Widget _buildTimeColumn(int totalHours) {
-    return Container(
-      width: 70,
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        border: Border(right: BorderSide(color: Colors.grey.shade300)),
-      ),
-      child: Column(
-        children: [
-          Container(
-            height: 60,
-            decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
-            ),
-            child: const Center(
-              child: Text(
-                'Time',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                  color: kPrimaryBlue,
-                ),
+
+Widget _buildTimeColumn(int totalHours) {
+  return Container(
+    width: 70,
+    decoration: BoxDecoration(
+      color: Colors.grey.shade50,
+      border: Border(right: BorderSide(color: Colors.grey.shade300)),
+    ),
+    child: Column(
+      children: [
+        // ✅ Spacer matching day header height
+        Container(
+          height: 60,
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
+          ),
+          child: const Center(
+            child: Text(
+              'Time',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+                color: kPrimaryBlue,
               ),
             ),
           ),
-          ...List.generate(totalHours, (index) {
-            final hour = _startHour + index;
-            return Container(
-              height: _rowHeight,
-              decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
-              ),
-              child: Align(
-                alignment: Alignment.topRight,
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 8, top: 4),
-                  child: Text(
-                    _formatHour(hour),
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade700,
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDayHeaders(List<DateTime> weekDays) {
-    final now = DateTime.now();
-
-    return Container(
-      height: 60,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
-      ),
-      child: Row(
-        children: weekDays.map((day) {
-          final isToday = day.year == now.year &&
-              day.month == now.month &&
-              day.day == now.day;
-
+        ),
+        // ✅ Hour labels
+        ...List.generate(totalHours, (index) {
+          final hour = _startHour + index;
           return Container(
-            width: _colWidth,
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            height: _rowHeight,
             decoration: BoxDecoration(
-              color: isToday ? kAccentBlue : Colors.transparent,
-              border: Border(
-                right: BorderSide(color: Colors.grey.shade200),
-              ),
+              border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  _getDayName(day.weekday),
+            child: Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8, top: 4),
+                child: Text(
+                  _formatHour(hour),
                   style: TextStyle(
-                    fontWeight: FontWeight.bold,
                     fontSize: 12,
-                    color: isToday ? kPrimaryBlue : Colors.grey.shade700,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade700,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: isToday ? kPrimaryBlue : Colors.transparent,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      day.day.toString(),
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: isToday ? Colors.white : kPrimaryBlue,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           );
-        }).toList(),
-      ),
-    );
-  }
+        }),
+      ],
+    ),
+  );
+}
+
+
+Widget _buildDayHeaders(List<DateTime> weekDays) {
+  final now = DateTime.now();
+
+  return SizedBox(
+    width: weekDays.length * _colWidth,
+    height: 60,
+    child: Row(
+      children: weekDays.map((day) {
+        final isToday = day.year == now.year &&
+            day.month == now.month &&
+            day.day == now.day;
+
+        return Container(
+          width: _colWidth,
+          height: 60,
+          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+          decoration: BoxDecoration(
+            color: isToday ? kAccentBlue : Colors.white,
+            border: Border(
+              right: BorderSide(color: Colors.grey.shade200),
+              bottom: BorderSide(color: Colors.grey.shade300),
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                _getDayName(day.weekday),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 11,
+                  color: isToday ? kPrimaryBlue : Colors.grey.shade700,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: isToday ? kPrimaryBlue : Colors.transparent,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    day.day.toString(),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: isToday ? Colors.white : kPrimaryBlue,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    ),
+  );
+}
+
 
   Widget _buildTimeGrid(List<DateTime> weekDays, List<dynamic> blocks, int totalHours) {
     return SizedBox(
@@ -480,111 +487,223 @@ class _WeeklyCalendarViewState extends ConsumerState<WeeklyCalendarView> {
     );
   }
 
+  // Widget _buildTimeBlock(dynamic block, List<DateTime> weekDays) {
+  //   final blockDate = block.startTime as DateTime;
+  //   final dayIndex = weekDays.indexWhere((day) =>
+  //       day.year == blockDate.year &&
+  //       day.month == blockDate.month &&
+  //       day.day == blockDate.day);
+
+  //   if (dayIndex == -1) return const SizedBox.shrink();
+
+  //   final startHour = blockDate.hour;
+  //   final startMinute = blockDate.minute;
+  //   final durationMinutes = block.durationMinutes as int;
+
+  //   if (startHour < _startHour || startHour > _endHour) {
+  //     return const SizedBox.shrink();
+  //   }
+
+  //   final topPosition = ((startHour - _startHour) * _rowHeight) +
+  //       (startMinute / 60 * _rowHeight);
+  //   final height = (durationMinutes / 60 * _rowHeight).clamp(20.0, _rowHeight * 5);
+
+  //   final blockColor = _getBlockColor(block.blockType as String);
+  //   final now = DateTime.now();
+  //   final isCurrent = now.isAfter(blockDate) && now.isBefore(block.endTime as DateTime);
+
+  //   return Positioned(
+  //     top: topPosition,
+  //     left: dayIndex * _colWidth + 4,
+  //     child: GestureDetector(
+  //       onTap: () => _showBlockDetails(block),
+  //       child: Container(
+  //         width: _colWidth - 8,
+  //         height: height,
+  //         margin: const EdgeInsets.symmetric(vertical: 1),
+  //         padding: const EdgeInsets.all(8),
+  //         decoration: BoxDecoration(
+  //           color: block.completionStatus == 'completed'
+  //               ? Colors.green.withOpacity(0.2)
+  //               : block.completionStatus == 'missed'
+  //                   ? Colors.red.withOpacity(0.2)
+  //                   : blockColor.withOpacity(0.15),
+  //           borderRadius: BorderRadius.circular(8),
+  //           border: Border.all(
+  //             color: block.completionStatus == 'completed'
+  //                 ? Colors.green
+  //                 : block.completionStatus == 'missed'
+  //                     ? Colors.red
+  //                     : blockColor,
+  //             width: isCurrent ? 2.5 : 1.5,
+  //           ),
+  //           boxShadow: isCurrent
+  //               ? [
+  //                   BoxShadow(
+  //                     color: blockColor.withOpacity(0.3),
+  //                     blurRadius: 8,
+  //                     offset: const Offset(0, 2),
+  //                   )
+  //                 ]
+  //               : null,
+  //         ),
+  //         child: Column(
+  //           crossAxisAlignment: CrossAxisAlignment.start,
+  //           children: [
+  //             Text(
+  //               block.title as String,
+  //               style: TextStyle(
+  //                 fontWeight: FontWeight.bold,
+  //                 fontSize: 12,
+  //                 color: blockColor,
+  //                 decoration: block.completionStatus == 'completed'
+  //                     ? TextDecoration.lineThrough
+  //                     : null,
+  //               ),
+  //               maxLines: 2,
+  //               overflow: TextOverflow.ellipsis,
+  //             ),
+  //             const SizedBox(height: 2),
+  //             Text(
+  //               '${_formatTime(blockDate)} - ${_formatTime(block.endTime as DateTime)}',
+  //               style: TextStyle(
+  //                 fontSize: 10,
+  //                 color: Colors.grey.shade700,
+  //                 fontWeight: FontWeight.w600,
+  //               ),
+  //             ),
+  //             if (height > 60 && block.description != null) ...[
+  //               const SizedBox(height: 4),
+  //               Expanded(
+  //                 child: Text(
+  //                   block.description as String,
+  //                   style: TextStyle(
+  //                     fontSize: 10,
+  //                     color: Colors.grey.shade600,
+  //                   ),
+  //                   maxLines: 3,
+  //                   overflow: TextOverflow.ellipsis,
+  //                 ),
+  //               ),
+  //             ],
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
+
   Widget _buildTimeBlock(dynamic block, List<DateTime> weekDays) {
-    final blockDate = block.startTime as DateTime;
-    final dayIndex = weekDays.indexWhere((day) =>
-        day.year == blockDate.year &&
-        day.month == blockDate.month &&
-        day.day == blockDate.day);
+  final blockDate = block.startTime as DateTime;
+  final dayIndex = weekDays.indexWhere((day) =>
+      day.year == blockDate.year &&
+      day.month == blockDate.month &&
+      day.day == blockDate.day);
 
-    if (dayIndex == -1) return const SizedBox.shrink();
+  if (dayIndex == -1) return const SizedBox.shrink();
 
-    final startHour = blockDate.hour;
-    final startMinute = blockDate.minute;
-    final durationMinutes = block.durationMinutes as int;
+  final startHour = blockDate.hour;
+  final startMinute = blockDate.minute;
+  final durationMinutes = block.durationMinutes as int;
 
-    if (startHour < _startHour || startHour > _endHour) {
-      return const SizedBox.shrink();
-    }
+  if (startHour < _startHour || startHour > _endHour) {
+    return const SizedBox.shrink();
+  }
 
-    final topPosition = ((startHour - _startHour) * _rowHeight) +
-        (startMinute / 60 * _rowHeight);
-    final height = (durationMinutes / 60 * _rowHeight).clamp(20.0, _rowHeight * 5);
+  final topPosition = ((startHour - _startHour) * _rowHeight) +
+      (startMinute / 60 * _rowHeight);
+  final height = (durationMinutes / 60 * _rowHeight).clamp(30.0, _rowHeight * 6);
 
-    final blockColor = _getBlockColor(block.blockType as String);
-    final now = DateTime.now();
-    final isCurrent = now.isAfter(blockDate) && now.isBefore(block.endTime as DateTime);
+  final blockColor = _getBlockColor(block.blockType as String);
+  final now = DateTime.now();
+  final isCurrent = now.isAfter(blockDate) && now.isBefore(block.endTime as DateTime);
 
-    return Positioned(
-      top: topPosition,
-      left: dayIndex * _colWidth + 4,
-      child: GestureDetector(
-        onTap: () => _showBlockDetails(block),
-        child: Container(
-          width: _colWidth - 8,
-          height: height,
-          margin: const EdgeInsets.symmetric(vertical: 1),
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
+  return Positioned(
+    top: topPosition,
+    left: dayIndex * _colWidth + 4,
+    child: GestureDetector(
+      onTap: () => _showBlockDetails(block),
+      child: Container(
+        width: _colWidth - 8,
+        height: height,
+        margin: const EdgeInsets.symmetric(vertical: 1),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: block.completionStatus == 'completed'
+              ? Colors.green.withOpacity(0.2)
+              : block.completionStatus == 'missed'
+                  ? Colors.red.withOpacity(0.2)
+                  : blockColor.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
             color: block.completionStatus == 'completed'
-                ? Colors.green.withOpacity(0.2)
+                ? Colors.green
                 : block.completionStatus == 'missed'
-                    ? Colors.red.withOpacity(0.2)
-                    : blockColor.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: block.completionStatus == 'completed'
-                  ? Colors.green
-                  : block.completionStatus == 'missed'
-                      ? Colors.red
-                      : blockColor,
-              width: isCurrent ? 2.5 : 1.5,
-            ),
-            boxShadow: isCurrent
-                ? [
-                    BoxShadow(
-                      color: blockColor.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    )
-                  ]
-                : null,
+                    ? Colors.red
+                    : blockColor,
+            width: isCurrent ? 2.5 : 1.5,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                block.title as String,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                  color: blockColor,
-                  decoration: block.completionStatus == 'completed'
-                      ? TextDecoration.lineThrough
-                      : null,
+          boxShadow: isCurrent
+              ? [
+                  BoxShadow(
+                    color: blockColor.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  )
+                ]
+              : null,
+        ),
+        // ✅ FIX: Use ClipRect to prevent overflow
+        child: ClipRect(
+          child: SingleChildScrollView(
+            physics: const NeverScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  block.title as String,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: blockColor,
+                    decoration: block.completionStatus == 'completed'
+                        ? TextDecoration.lineThrough
+                        : null,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                '${_formatTime(blockDate)} - ${_formatTime(block.endTime as DateTime)}',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Colors.grey.shade700,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              if (height > 60 && block.description != null) ...[
                 const SizedBox(height: 4),
-                Expanded(
-                  child: Text(
-                    block.description as String,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: Colors.grey.shade600,
-                    ),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
+                Text(
+                  '${_formatTime(blockDate)} - ${_formatTime(block.endTime as DateTime)}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey.shade700,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
+                if (height > 80 && block.description != null) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    block.description as String,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.grey.shade600,
+                    ),
+                    maxLines: 4,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
 
   void _showBlockDetails(dynamic block) {
     showModalBottomSheet(

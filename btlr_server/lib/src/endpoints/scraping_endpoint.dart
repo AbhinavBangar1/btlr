@@ -536,7 +536,8 @@ Future<bool> addCustomScrapingUrl(
 //   }
 
 
-  Future<List<ScrapedContent>> scrapeAllPlatforms(
+ // Scrape ONLY opportunity platforms (Devpost, Internshala, etc.)
+Future<List<ScrapedContent>> scrapeAllPlatforms(
   Session session,
   int userId,
 ) async {
@@ -545,7 +546,7 @@ Future<bool> addCustomScrapingUrl(
 
   List<ScrapedContent> allContent = [];
   
-  // Scrape platform preferences
+  // ✅ ONLY scrape platform preferences (opportunities)
   for (var pref in preferences) {
     if (!pref.isActive) continue;
 
@@ -563,32 +564,43 @@ Future<bool> addCustomScrapingUrl(
       session.log('Platform scrape failed (${pref.platform}): $e');
     }
   }
+
+  return allContent;
+}
+
+// ✅ NEW: Separate method for profile scraping
+Future<List<ScrapedContent>> scrapeUserProfiles(
+  Session session,
+  int userId,
+) async {
+  List<ScrapedContent> profileContent = [];
   
-  // NEW: Scrape user profiles
   try {
     var student = await StudentProfile.db.findById(session, userId);
-    if (student != null) {
-      if (student.githubUsername != null && student.githubUsername!.isNotEmpty) {
-        var githubContent = await _scrapeGitHub(session, userId, student.githubUsername!);
-        allContent.addAll(githubContent);
-      }
-      
-      if (student.leetcodeUsername != null && student.leetcodeUsername!.isNotEmpty) {
-        var leetcodeContent = await _scrapeLeetCode(session, userId, student.leetcodeUsername!);
-        allContent.addAll(leetcodeContent);
-      }
-      
-      if (student.codeforcesUsername != null && student.codeforcesUsername!.isNotEmpty) {
-        var cfContent = await _scrapeCodeforces(session, userId, student.codeforcesUsername!);
-        allContent.addAll(cfContent);
-      }
+    if (student == null) return [];
+
+    if (student.githubUsername != null && student.githubUsername!.isNotEmpty) {
+      var githubContent = await _scrapeGitHub(session, userId, student.githubUsername!);
+      profileContent.addAll(githubContent);
+    }
+    
+    if (student.leetcodeUsername != null && student.leetcodeUsername!.isNotEmpty) {
+      var leetcodeContent = await _scrapeLeetCode(session, userId, student.leetcodeUsername!);
+      profileContent.addAll(leetcodeContent);
+    }
+    
+    if (student.codeforcesUsername != null && student.codeforcesUsername!.isNotEmpty) {
+      var cfContent = await _scrapeCodeforces(session, userId, student.codeforcesUsername!);
+      profileContent.addAll(cfContent);
     }
   } catch (e) {
     session.log('Profile scraping error: $e');
   }
 
-  return allContent;
+  return profileContent;
 }
+
+
 
 
   Future<List<ScrapedContent>> scrapePlatform(

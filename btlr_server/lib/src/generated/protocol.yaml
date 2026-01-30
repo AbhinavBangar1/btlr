@@ -107,6 +107,7 @@ scraping:
   - addCustomScrapingUrl:
   - getUserScrapingPreferences:
   - scrapeAllPlatforms:
+  - scrapeUserProfiles:
   - scrapePlatform:
   - getScrapedContent:
   - markAsRead:

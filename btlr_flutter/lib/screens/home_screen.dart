@@ -6,6 +6,7 @@ import 'schedule_screen.dart';
 // import 'opportunities_screen.dart';
 import 'settings_screen.dart';
 import 'discover_screen.dart';
+import 'schedule_view_wrapper.dart' ;
 
 // --- BRAND CONSTANTS ---
 const Color kPrimaryBlue = Color(0xFF274B7F); // BTLR Sapphire Blue
@@ -25,7 +26,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   static const List<Widget> _screens = [
     DashboardScreen(),
     GoalsScreen(),
-    ScheduleScreen(),
+    ScheduleViewWrapper(),
     DiscoverScreen(),
     SettingsScreen(),
   ];

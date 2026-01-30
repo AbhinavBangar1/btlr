@@ -1453,6 +1453,13 @@ class EndpointScraping extends _i2.EndpointRef {
         {'userId': userId},
       );
 
+  _i3.Future<List<_i13.ScrapedContent>> scrapeUserProfiles(int userId) =>
+      caller.callServerEndpoint<List<_i13.ScrapedContent>>(
+        'scraping',
+        'scrapeUserProfiles',
+        {'userId': userId},
+      );
+
   _i3.Future<List<_i13.ScrapedContent>> scrapePlatform(
     int userId,
     String platform,

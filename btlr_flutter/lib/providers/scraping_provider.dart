@@ -217,25 +217,28 @@ class ScrapedContentNotifier extends StateNotifier<AsyncValue<List<ScrapedConten
     }
   }
 
-  /// Scrape all platforms
-  Future<void> scrapeAll() async {
-    final studentId = ref.read(currentStudentIdProvider);
-    if (studentId == null) return;
+/// Scrape all platforms
+Future<void> scrapeAll() async {
+  final studentId = ref.read(currentStudentIdProvider);
+  if (studentId == null) return;
 
-    try {
-      final endpoint = ref.read(scrapingEndpointProvider);
-      
-      // AUTO-CREATE DEFAULT SCRAPING PREFERENCES
-      await endpoint.addCustomScrapingUrl(studentId, 'devpost', null);
-      await endpoint.addCustomScrapingUrl(studentId, 'internshala', null);
-      
-      // Now scrape
-      await endpoint.scrapeAllPlatforms(studentId);
-      await loadScrapedContent();
-    } catch (e, st) {
-      print('Scraping error: $e');
-    }
+  try {
+    final endpoint = ref.read(scrapingEndpointProvider);
+    
+    // AUTO-CREATE DEFAULT SCRAPING PREFERENCES
+    await endpoint.addCustomScrapingUrl(studentId, 'devpost', null);
+    await endpoint.addCustomScrapingUrl(studentId, 'internshala', null);
+    
+    // ✅ Scrape opportunities AND profiles separately
+    await endpoint.scrapeAllPlatforms(studentId);
+    await endpoint.scrapeUserProfiles(studentId); // New method
+    
+    await loadScrapedContent();
+  } catch (e, st) {
+    print('Scraping error: $e');
   }
+}
+
 
   /// Scrape specific platform
   Future<void> scrapePlatform(String platform) async {

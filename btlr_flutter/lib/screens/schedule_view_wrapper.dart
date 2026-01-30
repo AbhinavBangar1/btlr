@@ -9,12 +9,10 @@ class ScheduleViewWrapper extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Watching this ensures that whenever the button is pressed,
-    // this build method runs again and switches the return widget.
     final isCalendarView = ref.watch(viewModeProvider);
 
-    return isCalendarView
-        ? const WeeklyCalendarView()
+    return isCalendarView 
+        ? const WeeklyCalendarView() 
         : const ScheduleScreen();
   }
 }
